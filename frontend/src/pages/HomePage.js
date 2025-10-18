@@ -12,75 +12,203 @@ import {
 } from '@mui/material';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import ChatIcon from '@mui/icons-material/Chat';
-import NatureIcon from '@mui/icons-material/Nature';
 
 const HomePage = () => {
   const navigate = useNavigate();
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ textAlign: 'center', mb: 6 }}>
-        <NatureIcon sx={{ fontSize: 80, color: 'primary.main', mb: 2 }} />
-        <Typography variant="h2" component="h1" gutterBottom>
-          Welcome to Plant Recognition System
+      <Box sx={{ textAlign: 'center', mb: 8, mt: 4 }}>
+        <Box
+          sx={{
+            display: 'inline-block',
+            mb: 3,
+          }}
+        >
+          <Box
+            component="img"
+            src="/logo.jpg"
+            alt="Bitki Tanı Logo"
+            sx={{
+              height: 120,
+              width: 120,
+              borderRadius: '32px',
+              boxShadow: '0 12px 40px rgba(45, 106, 79, 0.3)',
+              transition: 'all 0.4s ease',
+              '&:hover': {
+                transform: 'scale(1.1) rotate(5deg)',
+                boxShadow: '0 16px 50px rgba(45, 106, 79, 0.4)',
+              },
+            }}
+          />
+        </Box>
+        <Typography 
+          variant="h2" 
+          component="h1" 
+          gutterBottom
+          sx={{
+            fontWeight: 800,
+            background: 'linear-gradient(135deg, #2d6a4f 0%, #52b788 100%)',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            mb: 2,
+          }}
+        >
+          Welcome to Bitki Tanı
         </Typography>
-        <Typography variant="h5" color="text.secondary" paragraph>
-          AI-Powered Botanical Assistant
+        <Typography 
+          variant="h5" 
+          sx={{ 
+            color: 'text.secondary',
+            fontWeight: 500,
+            mb: 3,
+          }}
+        >
+          Your AI-Powered Botanical Assistant
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 800, mx: 'auto' }}>
-          Identify plants instantly using advanced AI technology. Upload a photo or describe
-          a plant to get detailed information about species, care instructions, and more.
+        <Typography 
+          variant="body1" 
+          sx={{ 
+            color: 'text.secondary',
+            maxWidth: 700,
+            mx: 'auto',
+            fontSize: '1.1rem',
+            lineHeight: 1.7,
+          }}
+        >
+          Identify plants instantly using advanced AI technology. Upload a photo or ask
+          questions to get detailed information about species, care instructions, and more.
         </Typography>
       </Box>
 
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
-          <Card elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              <PhotoCameraIcon sx={{ fontSize: 60, color: 'primary.main', mb: 2 }} />
-              <Typography variant="h5" component="h2" gutterBottom>
-                Image Recognition
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Upload a plant image and let our AI identify it for you. Get instant results
-                with detailed information about the plant species, characteristics, and care
-                instructions.
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button
-                size="large"
-                variant="contained"
-                fullWidth
-                onClick={() => navigate('/recognize')}
+      <Grid container spacing={4} justifyContent="center">
+        <Grid item xs={12} md={9}>
+          <Card 
+            elevation={0}
+            sx={{ 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(248,249,250,0.9) 100%)',
+              border: '1px solid rgba(45, 106, 79, 0.1)',
+              overflow: 'hidden',
+              position: 'relative',
+            }}
+          >
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -50,
+                right: -50,
+                width: 200,
+                height: 200,
+                borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(82, 183, 136, 0.15) 0%, transparent 70%)',
+              }}
+            />
+            <CardContent sx={{ p: 4, position: 'relative', zIndex: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3, mb: 3 }}>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, rgba(45, 106, 79, 0.1) 0%, rgba(82, 183, 136, 0.1) 100%)',
+                  }}
+                >
+                  <PhotoCameraIcon sx={{ fontSize: 48, color: 'primary.main' }} />
+                </Box>
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: '16px',
+                    background: 'linear-gradient(135deg, rgba(244, 162, 97, 0.1) 0%, rgba(246, 189, 96, 0.1) 100%)',
+                  }}
+                >
+                  <ChatIcon sx={{ fontSize: 48, color: 'secondary.main' }} />
+                </Box>
+              </Box>
+              
+              <Typography 
+                variant="h4" 
+                component="h2" 
+                gutterBottom 
+                align="center"
+                sx={{ fontWeight: 700, mb: 3 }}
               >
-                Start Recognition
-              </Button>
-            </CardActions>
-          </Card>
-        </Grid>
+                Interactive Plant Assistant
+              </Typography>
+              
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  color: 'text.secondary',
+                  mb: 4,
+                  fontSize: '1.1rem',
+                  lineHeight: 1.7,
+                  textAlign: 'center',
+                }}
+              >
+                Experience our unified plant assistant that combines the power of image recognition
+                and conversational AI in one seamless interface.
+              </Typography>
 
-        <Grid item xs={12} md={6}>
-          <Card elevation={3} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-            <CardContent sx={{ flexGrow: 1 }}>
-              <ChatIcon sx={{ fontSize: 60, color: 'secondary.main', mb: 2 }} />
-              <Typography variant="h5" component="h2" gutterBottom>
-                Chatbot Assistant
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Have questions about plants? Chat with our AI-powered botanical assistant.
-                Ask about plant care, identification, habitat, and much more in natural language.
-              </Typography>
+              <Grid container spacing={2} sx={{ mb: 4 }}>
+                {[
+                  { icon: '📸', title: 'Upload Images', desc: 'Instant AI-powered identification' },
+                  { icon: '💬', title: 'Chat with AI', desc: 'Ask questions about any plant' },
+                  { icon: '🔍', title: 'Follow-up', desc: 'Context-aware conversations' },
+                  { icon: '🌿', title: 'Smart Analysis', desc: 'Detailed botanical insights' },
+                  { icon: '⚡', title: 'Fast Results', desc: 'Powered by CLIP & Weaviate' },
+                  { icon: '🎯', title: 'Accurate', desc: '10,000+ plant species' },
+                ].map((feature, idx) => (
+                  <Grid item xs={12} sm={6} md={4} key={idx}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        background: 'white',
+                        border: '1px solid rgba(0,0,0,0.06)',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          transform: 'translateY(-4px)',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                          borderColor: 'primary.main',
+                        },
+                      }}
+                    >
+                      <Typography variant="h4" sx={{ mb: 0.5 }}>{feature.icon}</Typography>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                        {feature.title}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {feature.desc}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
             </CardContent>
-            <CardActions>
+            
+            <CardActions sx={{ p: 4, pt: 0 }}>
               <Button
                 size="large"
                 variant="contained"
-                color="secondary"
                 fullWidth
-                onClick={() => navigate('/chat')}
+                onClick={() => navigate('/assistant')}
+                sx={{ 
+                  py: 2,
+                  fontSize: '1.1rem',
+                  fontWeight: 700,
+                  background: 'linear-gradient(135deg, #2d6a4f 0%, #52b788 100%)',
+                  boxShadow: '0 8px 24px rgba(45, 106, 79, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #1b4332 0%, #2d6a4f 100%)',
+                    boxShadow: '0 12px 32px rgba(45, 106, 79, 0.4)',
+                    transform: 'translateY(-2px)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
               >
-                Start Chatting
+                Launch Plant Assistant →
               </Button>
             </CardActions>
           </Card>

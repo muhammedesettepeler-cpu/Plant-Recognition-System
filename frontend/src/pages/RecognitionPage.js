@@ -1,20 +1,19 @@
 import React, { useState } from 'react';
 import {
   Box,
-  Paper,
   Typography,
   Button,
   CircularProgress,
   Alert,
   Card,
   CardContent,
-  CardMedia,
   Grid,
   Chip,
+  Divider,
+  LinearProgress,
 } from '@mui/material';
-import { useDropzone } from 'react-dropzone';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import axios from 'axios';
+import ImageUpload from '../components/ImageUpload';
+import { chatAPI, imageToFormData } from '../services/api';
 
 const RecognitionPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -23,23 +22,12 @@ const RecognitionPage = () => {
   const [results, setResults] = useState(null);
   const [error, setError] = useState(null);
 
-  const onDrop = (acceptedFiles) => {
-    const file = acceptedFiles[0];
-    if (file) {
-      setSelectedFile(file);
-      setPreview(URL.createObjectURL(file));
-      setResults(null);
-      setError(null);
-    }
+  const handleFileSelect = (file) => {
+    setSelectedFile(file);
+    setPreview(URL.createObjectURL(file));
+    setResults(null);
+    setError(null);
   };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png']
-    },
-    multiple: false,
-  });
 
   const handleRecognize = async () => {
     if (!selectedFile) return;
@@ -47,19 +35,26 @@ const RecognitionPage = () => {
     setLoading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
     try {
-      const response = await axios.post('/api/v1/recognize', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      // Use chat-with-image endpoint for better RAG integration
+      const formData = imageToFormData(selectedFile, {
+        message: 'Please identify this plant and provide detailed information about it.',
+        session_id: `recognition_${Date.now()}`,
       });
 
-      setResults(response.data.results);
+      const response = await chatAPI.sendImageMessage(formData);
+      
+      // Transform response to match expected format
+      setResults({
+        response: response.data.response,
+        identified_plants: response.data.identified_plants || [],
+        similarity_results: response.data.similarity_results || [],
+        confidence: response.data.confidence || 0,
+        timestamp: response.data.timestamp,
+      });
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to recognize plant');
+      setError(err.message || 'Failed to recognize plant. Please try again.');
+      console.error('Recognition error:', err);
     } finally {
       setLoading(false);
     }
@@ -71,51 +66,18 @@ const RecognitionPage = () => {
         Plant Image Recognition
       </Typography>
       <Typography variant="body1" color="text.secondary" paragraph>
-        Upload a plant image to identify the species and get detailed information.
+        Upload a plant image to identify the species and get detailed information powered by AI.
       </Typography>
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
-          <Paper
-            {...getRootProps()}
-            sx={{
-              p: 4,
-              textAlign: 'center',
-              cursor: 'pointer',
-              border: '2px dashed',
-              borderColor: isDragActive ? 'primary.main' : 'grey.300',
-              bgcolor: isDragActive ? 'action.hover' : 'background.paper',
-              minHeight: 300,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <input {...getInputProps()} />
-            {preview ? (
-              <Box>
-                <img
-                  src={preview}
-                  alt="Preview"
-                  style={{ maxWidth: '100%', maxHeight: 250, borderRadius: 8 }}
-                />
-                <Typography variant="body2" sx={{ mt: 2 }}>
-                  {selectedFile.name}
-                </Typography>
-              </Box>
-            ) : (
-              <>
-                <CloudUploadIcon sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-                <Typography variant="h6" gutterBottom>
-                  {isDragActive ? 'Drop the image here' : 'Drag & drop a plant image'}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  or click to select a file
-                </Typography>
-              </>
-            )}
-          </Paper>
+          <ImageUpload
+            onFileSelect={handleFileSelect}
+            selectedFile={selectedFile}
+            preview={preview}
+            disabled={loading}
+            minHeight={350}
+          />
 
           <Button
             variant="contained"
@@ -125,13 +87,29 @@ const RecognitionPage = () => {
             disabled={!selectedFile || loading}
             sx={{ mt: 2 }}
           >
-            {loading ? <CircularProgress size={24} /> : 'Recognize Plant'}
+            {loading ? (
+              <>
+                <CircularProgress size={20} sx={{ mr: 1 }} color="inherit" />
+                Analyzing...
+              </>
+            ) : (
+              'Identify Plant'
+            )}
           </Button>
+
+          {loading && (
+            <Box sx={{ mt: 2 }}>
+              <LinearProgress />
+              <Typography variant="caption" display="block" align="center" sx={{ mt: 1 }}>
+                Processing image with AI... This may take a few seconds
+              </Typography>
+            </Box>
+          )}
         </Grid>
 
         <Grid item xs={12} md={6}>
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
               {error}
             </Alert>
           )}
@@ -139,58 +117,85 @@ const RecognitionPage = () => {
           {results && (
             <Card elevation={3}>
               <CardContent>
-                <Typography variant="h5" gutterBottom>
-                  Recognition Results
+                <Typography variant="h5" gutterBottom color="primary">
+                  AI Analysis Result
                 </Typography>
 
-                {results.combined_results && (
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="h6" color="primary">
-                      {results.combined_results.scientific_name}
+                <Divider sx={{ my: 2 }} />
+
+                {/* Main Response */}
+                <Box sx={{ mb: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                  <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                    {results.response}
+                  </Typography>
+                </Box>
+
+                {/* Confidence Score */}
+                {results.confidence > 0 && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Confidence Score:
                     </Typography>
-                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                      {results.combined_results.common_name}
-                    </Typography>
-                    {results.combined_results.family && (
-                      <Chip
-                        label={`Family: ${results.combined_results.family}`}
-                        size="small"
-                        sx={{ mr: 1 }}
-                      />
-                    )}
                     <Chip
-                      label={`Confidence: ${(results.combined_results.confidence * 100).toFixed(1)}%`}
-                      color="primary"
-                      size="small"
+                      label={`${(results.confidence * 100).toFixed(1)}%`}
+                      color={results.confidence > 0.7 ? 'success' : results.confidence > 0.4 ? 'warning' : 'error'}
+                      sx={{ fontWeight: 'bold' }}
                     />
                   </Box>
                 )}
 
-                {results.description && (
-                  <Paper elevation={1} sx={{ p: 2, bgcolor: 'grey.50' }}>
+                {/* Identified Plants */}
+                {results.identified_plants && results.identified_plants.length > 0 && (
+                  <Box sx={{ mb: 2 }}>
                     <Typography variant="subtitle2" gutterBottom>
-                      Description:
+                      Identified Species:
                     </Typography>
-                    <Typography variant="body2">
-                      {results.description}
-                    </Typography>
-                  </Paper>
-                )}
-
-                {results.plantnet_results?.results && (
-                  <Box sx={{ mt: 3 }}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Alternative Matches:
-                    </Typography>
-                    {results.plantnet_results.results.slice(1, 4).map((result, idx) => (
-                      <Paper key={idx} elevation={0} sx={{ p: 1, mb: 1, bgcolor: 'grey.50' }}>
-                        <Typography variant="body2">
-                          {result.scientific_name} - {(result.score * 100).toFixed(1)}%
-                        </Typography>
-                      </Paper>
+                    {results.identified_plants.map((plant, idx) => (
+                      <Chip
+                        key={idx}
+                        label={plant.scientificName || plant.scientific_name || plant.name}
+                        sx={{ mr: 1, mb: 1 }}
+                        variant="outlined"
+                        color="primary"
+                      />
                     ))}
                   </Box>
                 )}
+
+                {/* Similar Plants from Vector DB */}
+                {results.similarity_results && results.similarity_results.length > 0 && (
+                  <Box>
+                    <Typography variant="subtitle2" gutterBottom>
+                      Similar Plants (Vector DB):
+                    </Typography>
+                    {results.similarity_results.map((result, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          p: 1.5,
+                          mb: 1,
+                          bgcolor: 'background.paper',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                        }}
+                      >
+                        <Typography variant="body2" fontWeight="medium">
+                          {result.scientificName || result.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Similarity: {(result.distance * 100).toFixed(1)}%
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+
+                <Divider sx={{ my: 2 }} />
+
+                <Typography variant="caption" color="text.secondary" display="block">
+                  Analysis completed at {new Date(results.timestamp).toLocaleString()}
+                </Typography>
               </CardContent>
             </Card>
           )}

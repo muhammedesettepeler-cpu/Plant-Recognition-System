@@ -1,36 +1,46 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Box } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
-import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
-import ChatIcon from '@mui/icons-material/Chat';
+import NaturePeopleIcon from '@mui/icons-material/NaturePeople';
 
 const Navigation = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const navItems = [
+    { path: '/', label: 'Home', icon: <HomeIcon /> },
+    { path: '/assistant', label: 'Plant Assistant', icon: <NaturePeopleIcon /> },
+  ];
 
   return (
-    <Box sx={{ display: 'flex', gap: 2 }}>
-      <Button
-        color="inherit"
-        startIcon={<HomeIcon />}
-        onClick={() => navigate('/')}
-      >
-        Home
-      </Button>
-      <Button
-        color="inherit"
-        startIcon={<PhotoCameraIcon />}
-        onClick={() => navigate('/recognize')}
-      >
-        Recognize
-      </Button>
-      <Button
-        color="inherit"
-        startIcon={<ChatIcon />}
-        onClick={() => navigate('/chat')}
-      >
-        Chat
-      </Button>
+    <Box sx={{ display: 'flex', gap: 1.5 }}>
+      {navItems.map((item) => {
+        const isActive = location.pathname === item.path || 
+                        (item.path === '/assistant' && ['/recognize', '/chat'].includes(location.pathname));
+        
+        return (
+          <Button
+            key={item.path}
+            startIcon={item.icon}
+            onClick={() => navigate(item.path)}
+            sx={{
+              color: isActive ? 'primary.main' : 'text.primary',
+              fontWeight: isActive ? 700 : 500,
+              px: 2.5,
+              py: 1,
+              borderRadius: 2,
+              backgroundColor: isActive ? 'rgba(45, 106, 79, 0.08)' : 'transparent',
+              '&:hover': {
+                backgroundColor: isActive ? 'rgba(45, 106, 79, 0.12)' : 'rgba(0, 0, 0, 0.04)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {item.label}
+          </Button>
+        );
+      })}
     </Box>
   );
 };

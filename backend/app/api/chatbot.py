@@ -7,6 +7,7 @@ from app.db.base import get_db
 from app.services.grok_service import grok_service
 from app.services.clip_service import clip_service
 from app.services.weaviate_service import weaviate_service
+from app.services.kaggle_notebook_service import kaggle_notebook_service
 from app.models.plant import UserQuery
 from app.core.security import ImageSecurity, AuthSecurity
 from app.core.rate_limiter import rate_limiter  # Yeni Redis-powered rate limiter
@@ -88,7 +89,7 @@ async def chat_with_image(
     _rate_limit: None = Depends(rate_limiter)  # Redis-powered rate limiting
 ):
     """
-    🔒 SECURE RAG Pipeline for Image-based Plant Questions
+     SECURE RAG Pipeline for Image-based Plant Questions
     
     Security Layers:
     1. API Key Authentication (optional, configurable)
@@ -155,23 +156,53 @@ async def chat_with_image(
         # STEP 4: Weaviate vector similarity search
         # 🔒 Weaviate credentials stay in backend only
         similar_plants = weaviate_service.similarity_search(embedding, limit=5)
-        logger.info(f"Found {len(similar_plants)} similar plants")
+        logger.info(f"🔍 Weaviate found {len(similar_plants)} similar plants")
+        
+        # STEP 4.5: Fallback to Kaggle if Weaviate results are poor
+        # Use Kaggle PlantCLEF 2025 dataset (1TB+, 10k+ species) for better coverage
+        kaggle_results = []
+        if not similar_plants or (similar_plants and similar_plants[0].get('_additional', {}).get('certainty', 0) < 0.7):
+            logger.info("🎯 Weaviate confidence low, trying Kaggle PlantCLEF...")
+            try:
+                kaggle_results = await kaggle_notebook_service.identify_plant(sanitized_bytes, top_k=5)
+                if kaggle_results:
+                    logger.info(f"✅ Kaggle found {len(kaggle_results)} predictions")
+                    # Merge results: Kaggle results have higher priority if confidence is high
+                    if kaggle_results[0].get('certainty', 0) > 0.8:
+                        similar_plants = kaggle_results + similar_plants
+                        logger.info("📊 Using Kaggle results as primary source")
+            except Exception as e:
+                logger.warning(f"Kaggle prediction failed: {e}, continuing with Weaviate only")
+        
+        # Combine all sources
+        all_results = similar_plants[:5]  # Top 5 from combined sources
+        logger.info(f"📊 Total results: {len(all_results)}")
         
         # STEP 5-6: RAG - Use top matches as context for LLM
-        if similar_plants:
+        if all_results:
+            # En iyi 3 sonucu formatla
+            top_3 = all_results[:3]
             context = "\n".join([
-                f"- {p.get('scientificName', 'Unknown')} ({p.get('commonName', '')}): {p.get('_additional', {}).get('certainty', 0):.2f} similarity"
-                for p in similar_plants[:3]
+                f"- {p.get('scientificName', 'Unknown')} ({p.get('commonName', '')}): "
+                f"{p.get('certainty', p.get('score', 0)):.2%} confidence, "
+                f"Family: {p.get('family', 'Unknown')}"
+                for p in top_3
             ])
-            prompt = f"Context from similar plants:\n{context}\n\nUser question: {safe_message}"
             
-            response = await grok_service.generate_rag_response(prompt, similar_plants)
-            logger.info(f"LLM response generated: {len(response)} chars")
+            # Türkçe prompt oluştur
+            if safe_message.lower() in ['identify', 'tanı', 'nedir', 'what is']:
+                prompt = (f"Aşağıdaki bitki türlerinden hangisi olduğunu açıkla. "
+                         f"3 seçeneği detaylı anlat:\n{context}")
+            else:
+                prompt = f"Bitki veritabanı sonuçları:\n{context}\n\nKullanıcı sorusu: {safe_message}"
+            
+            # LLM yanıtı al (hata durumunda fallback bitki bilgisiyle çalışır)
+            response = await grok_service.generate_rag_response(prompt, top_3)
+            logger.info(f"💬 LLM response generated: {len(response)} chars")
         else:
-            response = await grok_service.generate_response(
-                f"I couldn't find similar plants in the database. However, regarding your question: {safe_message}"
-            )
-            logger.info("LLM fallback response generated")
+            response = ("Görsel analizi tamamlandı ancak veritabanında eşleşen bitki bulunamadı. "
+                       "Lütfen daha net bir fotoğraf veya farklı açıdan çekilmiş görsel deneyin.")
+            logger.info("💬 No plants found, returning info message")
         
         # STEP 7: Log to database
         query = UserQuery(
@@ -182,14 +213,52 @@ async def chat_with_image(
         )
         db.add(query)
         db.commit()
-        logger.info(f"Query logged to database: session {session_id}")
+        logger.info(f"💾 Query logged to database: session {session_id}")
         
-        # STEP 8: Return response
+        # STEP 8: Return response with formatted plant data
+        formatted_plants = []
+        for idx, plant in enumerate(all_results[:3], 1):
+            # Weaviate certainty değeri _additional nesnesinde
+            additional = plant.get('_additional', {})
+            certainty = additional.get('certainty', plant.get('certainty', plant.get('score', 0)))
+            
+            # Eğer certainty hala 0 ise distance'dan hesapla (cosine distance: 0-2, 0=aynı)
+            if certainty == 0 and 'distance' in additional:
+                distance = additional.get('distance', 2)
+                certainty = 1 - (distance / 2)  # Distance'ı certainty'ye çevir (0-1)
+            
+            formatted_plant = {
+                "id": idx,
+                "scientificName": plant.get('scientificName', 'Bilinmeyen'),
+                "commonName": plant.get('commonName', ''),
+                "family": plant.get('family', ''),
+                "confidence": max(0.0, min(1.0, certainty)),  # 0-1 arasında sınırla
+                "source": plant.get('source', 'weaviate')
+            }
+            
+            # Eğer ek bilgi varsa ekle
+            if plant.get('description'):
+                formatted_plant['description'] = plant.get('description')
+            if plant.get('habitat'):
+                formatted_plant['habitat'] = plant.get('habitat')
+            
+            formatted_plants.append(formatted_plant)
+            
+            # Debug log
+            logger.info(f"Plant {idx}: {formatted_plant['scientificName']} - "
+                       f"Confidence: {formatted_plant['confidence']:.2%} "
+                       f"(raw certainty: {additional.get('certainty')}, distance: {additional.get('distance')})")
+        
         return {
             "session_id": session_id,
             "response": response,
-            "identified_plants": similar_plants[:3],
-            "confidence": similar_plants[0].get('_additional', {}).get('certainty', 0) if similar_plants else 0,
+            "identified_plants": formatted_plants,
+            "total_matches": len(all_results),
+            "highest_confidence": formatted_plants[0]["confidence"] if formatted_plants else 0,
+            "sources": {
+                "weaviate": len([p for p in all_results if p.get('source') != 'kaggle-plantclef']),
+                "kaggle": len([p for p in all_results if p.get('source') == 'kaggle-plantclef'])
+            },
             "image_hash": image_hash[:16],
             "timestamp": datetime.now(UTC).isoformat()
         }

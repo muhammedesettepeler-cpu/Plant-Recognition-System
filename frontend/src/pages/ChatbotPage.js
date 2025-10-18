@@ -16,8 +16,12 @@ import SendIcon from '@mui/icons-material/Send';
 import PersonIcon from '@mui/icons-material/Person';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import axios from 'axios';
-import { v4 as uuidv4 } from 'uuid';
+import { chatAPI, imageToFormData } from '../services/api';
+
+// Generate a simple session ID without external dependencies
+const generateSessionId = () => {
+  return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+};
 
 const ChatbotPage = () => {
   const [messages, setMessages] = useState([
@@ -29,7 +33,7 @@ const ChatbotPage = () => {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [sessionId] = useState(() => uuidv4());
+  const [sessionId] = useState(() => generateSessionId());
   const [selectedImage, setSelectedImage] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -49,7 +53,7 @@ const ChatbotPage = () => {
       role: 'user',
       content: input,
       timestamp: new Date().toISOString(),
-      image: selectedImage,
+      image: selectedImage ? selectedImage.name : null,
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -61,25 +65,21 @@ const ChatbotPage = () => {
 
       if (selectedImage) {
         // Chat with image
-        const formData = new FormData();
-        formData.append('file', selectedImage);
-        formData.append('message', input);
-        formData.append('session_id', sessionId);
-
-        response = await axios.post('/api/v1/chat-with-image', formData, {
-          headers: { 'Content-Type': 'multipart/form-data' },
+        const formData = imageToFormData(selectedImage, {
+          message: input || 'Please identify this plant and provide information about it.',
+          session_id: sessionId,
         });
 
+        response = await chatAPI.sendImageMessage(formData);
         setSelectedImage(null);
       } else {
         // Text-only chat
-        response = await axios.post('/api/v1/chat', {
+        response = await chatAPI.sendMessage({
           message: input,
           session_id: sessionId,
-          conversation_history: messages.map(({ role, content }) => ({
-            role,
-            content,
-          })),
+          conversation_history: messages
+            .filter((m) => !m.error)
+            .map(({ role, content }) => ({ role, content })),
         });
       }
 
@@ -88,13 +88,15 @@ const ChatbotPage = () => {
         content: response.data.response,
         timestamp: response.data.timestamp,
         plants: response.data.relevant_plants || response.data.identified_plants,
+        confidence: response.data.confidence,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
+      console.error('Chat error:', error);
       const errorMessage = {
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: error.message || 'Sorry, I encountered an error. Please try again.',
         timestamp: new Date().toISOString(),
         error: true,
       };

@@ -80,6 +80,42 @@ async def health_check(db: Session = Depends(get_db)):
     
     health_status["services"]["api_keys"] = "healthy" if api_keys_valid else "missing_keys"
     
+    # Kaggle Notebook check (optional service)
+    try:
+        from app.services.kaggle_notebook_service import kaggle_notebook_service
+        if kaggle_notebook_service.notebook_url:
+            # Try to check availability (with timeout)
+            is_available = await kaggle_notebook_service.check_availability()
+            health_status["services"]["kaggle_notebook"] = {
+                "status": "available" if is_available else "unavailable",
+                "url_configured": True,
+                "note": "PlantCLEF 2025 dataset (10k+ species)"
+            }
+        else:
+            health_status["services"]["kaggle_notebook"] = {
+                "status": "not_configured",
+                "url_configured": False,
+                "note": "Optional service for extended plant database"
+            }
+    except Exception as e:
+        health_status["services"]["kaggle_notebook"] = {
+            "status": "error",
+            "error": str(e)
+        }
+    
+    # Redis check (optional service)
+    try:
+        from app.services.redis_service import redis_service
+        health_status["services"]["redis"] = {
+            "status": "connected" if redis_service.is_connected else "disconnected",
+            "enabled": redis_service.is_connected
+        }
+    except Exception as e:
+        health_status["services"]["redis"] = {
+            "status": "not_available",
+            "error": str(e)
+        }
+    
     return health_status
 
 @router.get("/status")
