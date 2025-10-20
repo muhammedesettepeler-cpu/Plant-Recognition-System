@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "")
     OPENROUTER_BASE_URL: str = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
     OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-nano-9b-v2:free")
+
+    # Google AI Studio (optional) - prefer this if API key provided
+    GOOGLE_AI_STUDIO_API_KEY: str = os.getenv("GOOGLE_AI_STUDIO_API_KEY", "")
+    GOOGLE_AI_STUDIO_BASE_URL: str = os.getenv("GOOGLE_AI_STUDIO_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
+    GOOGLE_AI_STUDIO_MODEL: str = os.getenv("GOOGLE_AI_STUDIO_MODEL", "gemini-2.0-flash-exp")
     
     # Redis (Optional - for production)
     REDIS_URL: str = os.getenv("REDIS_URL", "")

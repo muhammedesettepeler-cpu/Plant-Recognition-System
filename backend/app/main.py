@@ -2,27 +2,20 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api import plant_recognition, chatbot, health
 import logging
 
 logger = logging.getLogger(__name__)
 
-app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-    description="LLM-Supported Intelligent Plant Recognition System",
-    docs_url=f"{settings.API_V1_PREFIX}/docs",
-    redoc_url=f"{settings.API_V1_PREFIX}/redoc",
-    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json"
-)
-
-@app.on_event("startup")
-async def startup_event():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     """
-    Load models and establish connections on startup
-    This prevents cold-start delays on first request
+    Lifespan context manager for startup and shutdown events
+    Modern FastAPI approach (replaces @app.on_event)
     """
+    # Startup
     logger.info("Starting application initialization...")
     
     # Connect to Redis (optional - for caching and rate limiting)
@@ -42,7 +35,7 @@ async def startup_event():
         from app.services.clip_service import clip_service
         logger.info("Loading CLIP model...")
         clip_service.load_model()
-        logger.info("CLIP model loaded successfully")
+        logger.info("✅ CLIP model loaded successfully")
     except Exception as e:
         logger.error(f"Failed to load CLIP model: {e}")
     
@@ -51,23 +44,36 @@ async def startup_event():
         from app.services.weaviate_service import weaviate_service
         logger.info("Connecting to Weaviate Cloud...")
         weaviate_service.connect()
-        logger.info("Weaviate connection established")
+        logger.info("✅ Weaviate connection established")
     except Exception as e:
         logger.error(f"Failed to connect to Weaviate: {e}")
     
-    logger.info("Application initialization completed")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Cleanup on shutdown"""
+    logger.info("🚀 Application initialization completed")
+    
+    yield  # Application runs here
+    
+    # Shutdown
     logger.info("Shutting down application...")
     
     # Disconnect Redis
     try:
         from app.services.redis_service import redis_service
         await redis_service.disconnect()
+        logger.info("✅ Redis disconnected")
     except Exception as e:
         logger.error(f"Redis disconnect error: {e}")
+    
+    logger.info("👋 Application shutdown complete")
+
+app = FastAPI(
+    title=settings.PROJECT_NAME,
+    version=settings.VERSION,
+    description="LLM-Supported Intelligent Plant Recognition System",
+    docs_url=f"{settings.API_V1_PREFIX}/docs",
+    redoc_url=f"{settings.API_V1_PREFIX}/redoc",
+    openapi_url=f"{settings.API_V1_PREFIX}/openapi.json",
+    lifespan=lifespan  # Use modern lifespan context manager
+)
 
 # CORS Middleware - Frontend'in API'ye erişmesini sağlar
 app.add_middleware(

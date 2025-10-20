@@ -21,6 +21,9 @@ opencv-python>=4.8.0
 # HTTP
 httpx==0.25.2
 
+# Google AI
+google-genai>=0.2.0
+
 # Utilities
 python-dotenv==1.0.0
 

@@ -6,25 +6,91 @@ import logging
 logger = logging.getLogger(__name__)
 
 class LLMService:
-    """OpenRouter LLM servisi (Grok yerine ücretsiz ve güçlü!)"""
+    """Google Gemini AI servisi (OpenRouter yerine)"""
     def __init__(self):
-        # OpenRouter kullan (ücretsiz ve daha iyi!)
+        # Tercih: Google AI Studio, yoksa OpenRouter
+        self.google_api_key = settings.GOOGLE_AI_STUDIO_API_KEY
+        self.google_model = settings.GOOGLE_AI_STUDIO_MODEL
+
         self.api_key = settings.OPENROUTER_API_KEY
         self.api_url = settings.OPENROUTER_BASE_URL
         self.model = settings.OPENROUTER_MODEL
+
+        # Google Gemini client (lazy init)
+        self._google_client = None
+
+        # Default headers for OpenRouter (kept for fallback)
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
             "HTTP-Referer": "http://localhost:8000",
             "X-Title": "Plant Recognition System"
         }
+
+    @property
+    def google_client(self):
+        """Lazy initialization of Google Gemini client"""
+        if self._google_client is None and self.google_api_key:
+            try:
+                from google import genai
+                self._google_client = genai.Client(api_key=self.google_api_key)
+                logger.info("✅ Google Gemini client initialized")
+            except ImportError:
+                logger.warning("google-genai package not installed, falling back to OpenRouter")
+            except Exception as e:
+                logger.error(f"Failed to initialize Google Gemini client: {e}")
+        return self._google_client
     
     async def generate_response(self, prompt: str, context: Optional[str] = None) -> str:
         try:
-            system_prompt = "You are an expert botanist assistant. Provide accurate, helpful information about plants."
-            if context:
-                system_prompt += f"\n\nContext: {context}"
+            system_prompt = """Sen uzman bir botanik asistanısın. Türkçe olarak yanıt ver.
+
+KURALLAR:
+1. SADECE Türkçe yanıt ver - başka dil kullanma
+2. Net, anlaşılır ve bilimsel doğru bilgi ver
+3. Bitki adlarını format: "Bilimsel Ad (Türkçe İsim)" şeklinde yaz
+4. Güven skorlarını belirt
+5. Kısa ve öz bilgi ver (2-3 paragraf)
+6. Abartma, sadece verilen context bilgisini kullan
+
+YASAKLAR:
+- Karma dil kullanımı (Korece, Japonca, İngilizce, Rusça karışık)
+- Anlamsız kelimeler
+- Uydurma bilgi
+- Çok uzun açıklamalar"""
             
+            if context:
+                system_prompt += f"\n\nVERİTABANI BİLGİSİ:\n{context}"
+            
+            # Compose full prompt
+            full_prompt = system_prompt + "\n\nKullanıcı Sorusu:\n" + prompt
+
+            # If Google AI Studio key is provided, use it (preferred)
+            if self.google_client:
+                logger.info(f"🤖 Using Google Gemini: {self.google_model}")
+                try:
+                    response = self.google_client.models.generate_content(
+                        model=self.google_model,
+                        contents=full_prompt
+                    )
+                    
+                    # Extract text from response
+                    if hasattr(response, 'text'):
+                        logger.info("✅ Google Gemini response received")
+                        return response.text
+                    elif hasattr(response, 'candidates') and len(response.candidates) > 0:
+                        candidate = response.candidates[0]
+                        if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
+                            text = ''.join(part.text for part in candidate.content.parts if hasattr(part, 'text'))
+                            logger.info("✅ Google Gemini response received (from candidates)")
+                            return text
+                    
+                    logger.warning("⚠️ Google Gemini returned unexpected format, falling back to OpenRouter")
+                except Exception as e:
+                    logger.error(f"❌ Google Gemini API error: {e}, falling back to OpenRouter")
+
+            # Otherwise fallback to OpenRouter
+            logger.info(f"🔄 Using OpenRouter (fallback): {self.model}")
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
@@ -33,8 +99,11 @@ class LLMService:
             payload = {
                 "model": self.model,
                 "messages": messages,
-                "max_tokens": 500,
-                "temperature": 0.7
+                "max_tokens": 400,
+                "temperature": 0.3,  # Daha tutarlı yanıtlar için düşük temperature
+                "top_p": 0.9,
+                "frequency_penalty": 0.0,
+                "presence_penalty": 0.0
             }
             
             async with httpx.AsyncClient(timeout=30.0) as client:
