@@ -13,13 +13,13 @@ This system combines computer vision, vector databases, and large language model
 
 - **Görüntü Tanıma / Image Recognition**: PlantNet API ve CLIP embeddings ile anlık bitki tanıma
 - **Benzerlik Arama / Similarity Search**: Weaviate vektör veritabanı ile görsel benzerlik arama
-- **Chatbot Arayüzü / Chatbot Interface**: Grok LLM destekli doğal dil etkileşimi
+- **Chatbot Arayüzü / Chatbot Interface**: Nvidia LLM destekli doğal dil etkileşimi
 - **RAG Mimarisi**: Retrieval-Augmented Generation ile hassas yanıtlar
 - **Kapsamlı Veritabanı**: PostgreSQL (metadata) + Weaviate (vektörler)
 - **Görüntü İşleme**: OpenCV ve TensorFlow ile gelişmiş ön işleme
-- **Bulut Depolama**: IDrive e2 ile ölçeklenebilir görüntü depolama
 
-## 🛠️ Kullanılan Teknolojiler / Technology Stack
+
+##  Kullanılan Teknolojiler / Technology Stack
 
 ### Backend
 - **Framework**: FastAPI
@@ -28,9 +28,9 @@ This system combines computer vision, vector databases, and large language model
 - **AI/ML**:
   - CLIP (openai/clip-vit-base-patch32) for embeddings
   - PlantNet API for plant identification
-  - Grok Free API for LLM responses
+  - Nvidia Free API for LLM responses
 - **Görüntü İşleme**: OpenCV, TensorFlow Image, Pillow
-- **Cloud Storage**: IDrive e2 Cloud (S3-compatible)
+
 
 ### Frontend
 - **Framework**: React.js
@@ -49,7 +49,7 @@ This system combines computer vision, vector databases, and large language model
 - **USDA Plants Database**: Bitki bilgileri
 - **Trefle.io**: Bitki türleri verisi
 
-## 🏗️ Architecture
+##  Architecture
 
 ```
 ┌─────────────────┐
@@ -63,7 +63,7 @@ This system combines computer vision, vector databases, and large language model
 ├─────────────────┤
 │ - PlantNet API  │
 │ - CLIP Model    │
-│ - Grok LLM      │
+│ - Nvidia LLM    │
 │ - RAG Pipeline  │
 └────────┬────────┘
          │
@@ -75,7 +75,7 @@ This system combines computer vision, vector databases, and large language model
 └──────┘  └──────────┘
 ```
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 Plant-Recognition-System/
@@ -121,7 +121,7 @@ Plant-Recognition-System/
 └── README.md
 ```
 
-## 🚀 Kurulum / Getting Started
+##  Kurulum / Getting Started
 
 ### Gereksinimler / Prerequisites
 
@@ -129,9 +129,8 @@ Plant-Recognition-System/
 - Python 3.11+
 - Node.js 18+
 - API Keys:
-  - Grok API key
+  - Nvidia API key
   - PlantNet API key
-  - IDrive e2 credentials (optional)
   - Weaviate Cloud API key (optional)
 
 ### Installation
@@ -257,7 +256,7 @@ npm test
 
 ## 📝 License
 
-This project is licensed under the MIT License.
+This project is licensed under the FSMVU License.
 
 ---
 

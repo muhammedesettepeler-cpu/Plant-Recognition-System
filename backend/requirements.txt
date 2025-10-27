@@ -17,6 +17,7 @@ transformers==4.35.2
 torch>=2.0.0
 Pillow>=10.0.0
 opencv-python>=4.8.0
+numpy>=1.24.0
 
 # HTTP
 httpx==0.25.2

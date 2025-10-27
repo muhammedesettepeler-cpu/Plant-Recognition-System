@@ -67,7 +67,7 @@ YASAKLAR:
 
             # If Google AI Studio key is provided, use it (preferred)
             if self.google_client:
-                logger.info(f"🤖 Using Google Gemini: {self.google_model}")
+                logger.info(f" Using Google Gemini: {self.google_model}")
                 try:
                     response = self.google_client.models.generate_content(
                         model=self.google_model,
@@ -76,21 +76,21 @@ YASAKLAR:
                     
                     # Extract text from response
                     if hasattr(response, 'text'):
-                        logger.info("✅ Google Gemini response received")
+                        logger.info(" Google Gemini response received")
                         return response.text
                     elif hasattr(response, 'candidates') and len(response.candidates) > 0:
                         candidate = response.candidates[0]
                         if hasattr(candidate, 'content') and hasattr(candidate.content, 'parts'):
                             text = ''.join(part.text for part in candidate.content.parts if hasattr(part, 'text'))
-                            logger.info("✅ Google Gemini response received (from candidates)")
+                            logger.info(" Google Gemini response received (from candidates)")
                             return text
                     
-                    logger.warning("⚠️ Google Gemini returned unexpected format, falling back to OpenRouter")
+                    logger.warning(" Google Gemini returned unexpected format, falling back to OpenRouter")
                 except Exception as e:
-                    logger.error(f"❌ Google Gemini API error: {e}, falling back to OpenRouter")
+                    logger.error(f" Google Gemini API error: {e}, falling back to OpenRouter")
 
             # Otherwise fallback to OpenRouter
-            logger.info(f"🔄 Using OpenRouter (fallback): {self.model}")
+            logger.info(f" Using OpenRouter (fallback): {self.model}")
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
@@ -167,7 +167,7 @@ YASAKLAR:
                 
                 logger.debug(f"Fallback plant {idx}: {sci_name} - {confidence:.1%}")
             
-            response_parts.append("\n\n💡 Bu bitkilerden biri hakkında daha fazla bilgi almak için soru sorabilirsiniz.")
+            response_parts.append("\n\n Bu bitkilerden biri hakkında daha fazla bilgi almak için soru sorabilirsiniz.")
             return "".join(response_parts)
         
         # Bitki verisi yoksa genel yanıt
@@ -179,10 +179,10 @@ YASAKLAR:
         
         if any(word in prompt_lower for word in ['care', 'water', 'sun', 'grow', 'bakım']):
             return ("Genel bitki bakım önerileri:\n"
-                   "- 💧 Düzenli sulama (toprağın nemini kontrol edin)\n"
-                   "- ☀️ Yeterli güneş ışığı (bitkiye göre değişir)\n"
-                   "- 🌱 İyi drene olan toprak kullanın\n"
-                   "- 🌡️ Uygun sıcaklık (15-25°C ideal)\n\n"
+                   "-  Düzenli sulama (toprağın nemini kontrol edin)\n"
+                   "-  Yeterli güneş ışığı (bitkiye göre değişir)\n"
+                   "-  İyi drene olan toprak kullanın\n"
+                   "-  Uygun sıcaklık (15-25°C ideal)\n\n"
                    "Daha spesifik bilgi için bitkinin adını belirtin.")
         
         return ("İsteğiniz işlendi. Lütfen aşağıdaki sonuçları kontrol edin veya "

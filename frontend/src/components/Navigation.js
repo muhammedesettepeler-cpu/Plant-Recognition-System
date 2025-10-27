@@ -27,8 +27,8 @@ const Navigation = () => {
             sx={{
               color: isActive ? 'primary.main' : 'text.primary',
               fontWeight: isActive ? 700 : 500,
-              px: 2.5,
-              py: 1,
+              px: { xs: 1.5, sm: 2.5 },
+              py: { xs: 0.5, sm: 1 },
               borderRadius: 2,
               backgroundColor: isActive ? 'rgba(45, 106, 79, 0.08)' : 'transparent',
               '&:hover': {

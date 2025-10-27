@@ -1,0 +1,13 @@
+/* Global styles for navbar behavior */
+html, body, #root {
+  height: 100%;
+}
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+}
+/* Prevent content shift when AppBar is fixed */
+.MuiToolbar-root {
+  -webkit-backface-visibility: hidden;
+}

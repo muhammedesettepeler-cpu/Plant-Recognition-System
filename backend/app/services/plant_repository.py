@@ -85,7 +85,7 @@ class PlantRepository:
             
             db.commit()
             db.refresh(plant)
-            logger.info(f"✅ Plant saved: {scientific_name}")
+            logger.info(f" Plant saved: {scientific_name}")
             return plant
             
         except Exception as e:
@@ -122,19 +122,19 @@ class PlantRepository:
         
         # Description
         if plant.description:
-            parts.append(f"\n📝 Açıklama:\n{plant.description}\n")
+            parts.append(f"\n Açıklama:\n{plant.description}\n")
         
         # Habitat
         if plant.habitat:
-            parts.append(f"\n🌍 Yaşam Alanı:\n{plant.habitat}\n")
-        
+            parts.append(f"\n Yaşam Alanı:\n{plant.habitat}\n")
+    
         # Care instructions
         if plant.care_instructions:
-            parts.append(f"\n🌱 Bakım:\n{plant.care_instructions}\n")
+            parts.append(f"\n Bakım:\n{plant.care_instructions}\n")
         
         # Characteristics
         if plant.characteristics:
-            parts.append(f"\n✨ Özellikler:\n")
+            parts.append(f"\n Özellikler:\n")
             for key, value in plant.characteristics.items():
                 parts.append(f"- {key}: {value}\n")
         

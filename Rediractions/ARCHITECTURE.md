@@ -154,7 +154,7 @@ User Message Input
        └──────┬───┘
               ▼
      ┌──────────────────┐
-     │   Grok LLM API   │
+     │   NVDIA LLM API   │
      │                  │
      │  RAG Process:    │
      │  - Context       │
@@ -275,7 +275,7 @@ User Query: "What plants need full sun?"
                     │
                     ▼
         ┌───────────────────────┐
-        │      Grok LLM         │
+        │      NVDIA LLM         │
         │                       │
         │  Generate coherent    │
         │  natural language     │
@@ -296,7 +296,7 @@ User Query: "What plants need full sun?"
         └────────────────────────┘
 ```
 
-## 🗄️ Database Schema
+##  Database Schema
 
 ### PostgreSQL Tables
 
@@ -357,7 +357,7 @@ Class: PlantImage
 └─ Vector: [512 dimensions from CLIP]
 ```
 
-## 🌐 Technology Stack Overview
+##  Technology Stack Overview
 
 ```
 ┌──────────────────────────────────────┐

@@ -18,18 +18,18 @@ def init_db():
     logger.info("="*60)
     
     try:
-        logger.info("\n📊 Creating tables...")
+        logger.info("\n Creating tables...")
         Base.metadata.create_all(bind=engine)
-        logger.info("✅ All tables created successfully!")
+        logger.info(" All tables created successfully!")
         
-        logger.info("\n📋 Tables in database:")
+        logger.info("\n Tables in database:")
         for table_name in Base.metadata.tables.keys():
             logger.info(f"  - {table_name}")
         
-        logger.info("\n✨ Database initialization complete!")
+        logger.info("\nDatabase initialization complete!")
         
     except Exception as e:
-        logger.error(f"❌ Database initialization failed: {e}")
+        logger.error(f"Database initialization failed: {e}")
         raise
 
 if __name__ == "__main__":

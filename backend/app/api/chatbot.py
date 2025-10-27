@@ -155,30 +155,30 @@ async def chat_with_image(
             raise HTTPException(status_code=500, detail="Failed to extract image features")
         logger.info(f" CLIP embedding extracted: {len(embedding)} dimensions")
         
-        # STEP 4: Weaviate vector similarity search
+        # STEP 4: Weaviate vector similarity search (Primary)
         #  Weaviate credentials stay in backend only
         similar_plants = weaviate_service.similarity_search(embedding, limit=5)
-        logger.info(f" Weaviate found {len(similar_plants)} similar plants")
+        logger.info(f"🔍 Weaviate found {len(similar_plants)} similar plants")
         
         # STEP 4.5: Fallback to Kaggle if Weaviate results are poor
         # Use Kaggle PlantCLEF 2025 dataset (1TB+, 10k+ species) for better coverage
         kaggle_results = []
         if not similar_plants or (similar_plants and similar_plants[0].get('_additional', {}).get('certainty', 0) < 0.7):
-            logger.info(" Weaviate confidence low, trying Kaggle PlantCLEF...")
+            logger.info("⚠️ Weaviate confidence low, trying Kaggle PlantCLEF...")
             try:
                 kaggle_results = await kaggle_notebook_service.identify_plant(sanitized_bytes, top_k=5)
                 if kaggle_results:
-                    logger.info(f"Kaggle found {len(kaggle_results)} predictions")
+                    logger.info(f"✅ Kaggle found {len(kaggle_results)} predictions")
                     # Merge results: Kaggle results have higher priority if confidence is high
                     if kaggle_results[0].get('certainty', 0) > 0.8:
                         similar_plants = kaggle_results + similar_plants
-                        logger.info(" Using Kaggle results as primary source")
+                        logger.info("📊 Using Kaggle results as primary source")
             except Exception as e:
-                logger.warning(f"Kaggle prediction failed: {e}, continuing with Weaviate only")
+                logger.warning(f"⚠️ Kaggle prediction failed: {e}, continuing with Weaviate only")
         
         # Combine all sources
         all_results = similar_plants[:5]  # Top 5 from combined sources
-        logger.info(f" Total results: {len(all_results)}")
+        logger.info(f"📊 Total results: {len(all_results)}")
         
         # STEP 5-6: RAG - Use top matches as context for LLM
         # ENHANCEMENT: Fetch detailed plant info from PostgreSQL or PlantNet
@@ -205,31 +205,72 @@ async def chat_with_image(
                 
                 if db_plant:
                     # PostgreSQL'de var, detaylı bilgiyi kullan
-                    logger.info(f"✅ Found {scientific_name} in PostgreSQL")
+                    logger.info(f" Found {scientific_name} in PostgreSQL - using cached data")
                     enriched_context = plant_repository.enrich_plant_data_for_llm(db_plant)
                     context_parts.append(f"{certainty:.1%} güven ile:\n{enriched_context}")
                     enriched_plants.append(db_plant)
                 else:
-                    # PostgreSQL'de yok, PlantNet'ten çekmeyi dene
-                    logger.info(f"🔍 {scientific_name} not in PostgreSQL, trying PlantNet...")
+                    # PostgreSQL'de yok - HYBRID APPROACH: PlantNet'e sor ve cache'le
+                    logger.info(f" {scientific_name} not in PostgreSQL, querying PlantNet API...")
                     
-                    # Basit context (Weaviate'den gelen bilgi)
-                    basic_context = (
-                        f"- {scientific_name} ({p.get('commonName', '')}): "
-                        f"{certainty:.1%} confidence, "
-                        f"Family: {p.get('family', 'Unknown')}"
-                    )
-                    context_parts.append(basic_context)
-                    
-                    # Arka planda PlantNet'ten veri çekip PostgreSQL'e kaydet
-                    # (Async task olarak çalışabilir, şimdilik basit try-except)
                     try:
-                        # PlantNet API'den detaylı bilgi al
-                        # Not: PlantNet sadece görsel bazlı tanıma yapar, isim bazlı detay vermez
-                        # Gelecekte Wikipedia/GBIF API eklenebilir
-                        logger.info(f"PlantNet doesn't support name-based lookup, skipping enrichment")
+                        # PlantNet API'ye aynı görseli gönder (görsel bazlı zengin veri alıyoruz)
+                        plantnet_results = await plantnet_service.identify_plant(sanitized_bytes)
+                        
+                        # PlantNet sonuçlarında eşleşen türü bul
+                        matching_plantnet = None
+                        for pn_result in plantnet_results:
+                            if pn_result.get('scientific_name', '').lower() == scientific_name.lower():
+                                matching_plantnet = pn_result
+                                break
+                        
+                        if matching_plantnet:
+                            logger.info(f" PlantNet returned data for {scientific_name}, caching to PostgreSQL...")
+                            
+                            # PostgreSQL'e kaydet (auto-enrichment)
+                            plant_data = {
+                                "scientific_name": scientific_name,
+                                "scientific_name_full": matching_plantnet.get('scientific_name_full', scientific_name),
+                                "common_names": [matching_plantnet.get('common_name', p.get('commonName', ''))],
+                                "family": matching_plantnet.get('family', p.get('family', '')),
+                                "genus": matching_plantnet.get('genus', ''),
+                                "description": f"Auto-enriched from PlantNet API. Score: {matching_plantnet.get('score', 0):.1%}",
+                                "plantnet_verified": True,
+                            }
+                            
+                            new_plant = plant_repository.create_or_update_plant(db, plant_data)
+                            
+                            if new_plant:
+                                enriched_context = plant_repository.enrich_plant_data_for_llm(new_plant)
+                                context_parts.append(f"{certainty:.1%} güven ile:\n{enriched_context}")
+                                logger.info(f"✅ Successfully cached {scientific_name} to PostgreSQL")
+                            else:
+                                logger.error(f"❌ Failed to save {scientific_name} to PostgreSQL")
+                                basic_context = (
+                                    f"- {scientific_name} ({p.get('commonName', '')}): "
+                                    f"{certainty:.1%} confidence, "
+                                    f"Family: {p.get('family', 'Unknown')}"
+                                )
+                                context_parts.append(basic_context)
+                        else:
+                            # PlantNet'te de bulunamadı, basit bilgi kullan
+                            logger.warning(f" {scientific_name} not found in PlantNet results")
+                            basic_context = (
+                                f"- {scientific_name} ({p.get('commonName', '')}): "
+                                f"{certainty:.1%} confidence, "
+                                f"Family: {p.get('family', 'Unknown')}"
+                            )
+                            context_parts.append(basic_context)
+                    
                     except Exception as e:
-                        logger.warning(f"Failed to enrich {scientific_name}: {e}")
+                        # PlantNet API başarısız, basit bilgi kullan
+                        logger.warning(f" PlantNet API failed for {scientific_name}: {e}")
+                        basic_context = (
+                            f"- {scientific_name} ({p.get('commonName', '')}): "
+                            f"{certainty:.1%} confidence, "
+                            f"Family: {p.get('family', 'Unknown')}"
+                        )
+                        context_parts.append(basic_context)
             
             context = "\n\n".join(context_parts)
             
@@ -254,7 +295,7 @@ async def chat_with_image(
             
             # LLM yanıtı al (hata durumunda fallback bitki bilgisiyle çalışır)
             response = await grok_service.generate_rag_response(prompt, top_3)
-            logger.info(f"✨ LLM response generated with enriched context: {len(response)} chars")
+            logger.info(f" LLM response generated with enriched context: {len(response)} chars")
         else:
             response = ("Görsel analizi tamamlandı ancak veritabanında eşleşen bitki bulunamadı. "
                        "Lütfen daha net bir fotoğraf veya farklı açıdan çekilmiş görsel deneyin.")

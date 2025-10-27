@@ -18,7 +18,7 @@ const HomePage = () => {
 
   return (
     <Container maxWidth="lg">
-      <Box sx={{ textAlign: 'center', mb: 8, mt: 4 }}>
+  <Box sx={{ textAlign: 'center', mb: 8, mt: 2 }}>
         <Box
           sx={{
             display: 'inline-block',

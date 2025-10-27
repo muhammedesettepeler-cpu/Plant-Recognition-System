@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Container, AppBar, Toolbar, Typography, Box, Alert, Snackbar } from '@mui/material';
-import NatureIcon from '@mui/icons-material/Nature';
 import HomePage from './pages/HomePage';
 import InteractivePlantPage from './pages/InteractivePlantPage';
 import Navigation from './components/Navigation';
@@ -101,15 +100,19 @@ function App() {
       </Snackbar>
 
       <AppBar 
-        position="sticky" 
+        position="fixed" 
         elevation={0}
         sx={{ 
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: (theme) => theme.zIndex.appBar + 10,
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(10px)',
           borderBottom: '1px solid rgba(0,0,0,0.08)',
         }}
       >
-        <Toolbar sx={{ py: 1 }}>
+        <Toolbar sx={{ py: 1, minHeight: 72 }}>
           <Box
             onClick={() => window.location.href = '/'}
             sx={{
@@ -173,7 +176,8 @@ function App() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4, flex: 1 }}>
+  {/* Add top padding so fixed AppBar doesn't overlap content (equal to toolbar height) */}
+  <Container maxWidth="xl" sx={{ pt: '88px', mt: 0, mb: 4, flex: 1 }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/assistant" element={<InteractivePlantPage />} />

@@ -22,7 +22,7 @@ SEED_PLANTS = [
         "genus": "Rosa",
         "description": "Avrupa'nın güney ve orta bölgelerine özgü bir gül türüdür. Koyu pembe ila kırmızı renkte çiçekleriyle bilinir. Yüksekliği 60-120 cm arasında değişir ve geç ilkbahar ile erken yaz aylarında çiçek açar.",
         "habitat": "İyi drene olmuş, hafif asidik ila nötr pH'lı topraklarda yetişir. Tam güneş ışığı veya yarı gölge alanları tercih eder.",
-        "care_instructions": "💧 Sulama: Düzenli ama aşırı olmayan sulama. Toprağın nemini kontrol edin.\n☀️ Işık: Tam güneş ışığı ideal (günde 6+ saat).\n🌱 Toprak: İyi drene, organik madde açısından zengin.\n✂️ Budama: İlkbahar başında ölü ve hastalıklı dalları kesin.\n🌡️ Sıcaklık: -20°C'ye kadar soğuğa dayanıklı.",
+        "care_instructions": " Sulama: Düzenli ama aşırı olmayan sulama. Toprağın nemini kontrol edin.\n Işık: Tam güneş ışığı ideal (günde 6+ saat).\n Toprak: İyi drene, organik madde açısından zengin.\n Budama: İlkbahar başında ölü ve hastalıklı dalları kesin.\n Sıcaklık: -20°C'ye kadar soğuğa dayanıklı.",
         "characteristics": {
             "yaprak_tipi": "Bileşik yaprak, 5-7 yaprakçık",
             "yaprak_kenari": "Testere dişli",
@@ -44,7 +44,7 @@ SEED_PLANTS = [
         "genus": "Rosa",
         "description": "Güneybatı Çin'e özgü, tekrar çiçeklenme ve hastalık direnci ile bilinen gül türüdür. Modern bahçe güllerinin atalarından biridir.",
         "habitat": "Verimli, iyi drene topraklarda yetişir. Sıcağa dayanıklıdır.",
-        "care_instructions": "💧 Sulama: Haftada 2-3 kez, derin sulama.\n☀️ Işık: Tam güneş ışığı (günde 6-8 saat).\n🌱 Toprak: Verimli, gevşek, pH 6.0-6.5.\n🌸 Çiçeklenme: Tekrar çiçeklenme için solmuş çiçekleri kesin.\n🌡️ Sıcaklık: Sıcağa dayanıklı, 30°C+ tolere eder.",
+        "care_instructions": " Sulama: Haftada 2-3 kez, derin sulama.\n Işık: Tam güneş ışığı (günde 6-8 saat).\n Toprak: Verimli, gevşek, pH 6.0-6.5.\n Çiçeklenme: Tekrar çiçeklenme için solmuş çiçekleri kesin.\n Sıcaklık: Sıcağa dayanıklı, 30°C+ tolere eder.",
         "characteristics": {
             "yaprak_tipi": "Bileşik, 3-5 parlak yaprakçık",
             "yaprak_şekli": "Oval",
@@ -66,7 +66,7 @@ SEED_PLANTS = [
         "genus": "Rosa",
         "description": "Antik bir gül çeşidi, uçucu yağ üretimi için değerlidir. Yoğun ve tatlı kokulu pembe ila açık kırmızı çiçeklere sahiptir.",
         "habitat": "İyi drene, kumlu-tınlı topraklarda yetişir. Tam güneş ışığı gerektirir.",
-        "care_instructions": "💧 Sulama: Orta düzeyde, toprağın üst kısmı kuruduğunda sulayın.\n☀️ Işık: Tam güneş (günde 6-8 saat).\n🌱 Toprak: İyi drene, kumlu-tınlı, pH 6.5-7.0.\n🌹 Yağ Üretimi: Sabah erken saatlerde çiçek toplayın (en yoğun koku).\n🌡️ Sıcaklık: 15-25°C ideal.",
+        "care_instructions": " Sulama: Orta düzeyde, toprağın üst kısmı kuruduğunda sulayın.\n Işık: Tam güneş (günde 6-8 saat).\n Toprak: İyi drene, kumlu-tınlı, pH 6.5-7.0.\n Yağ Üretimi: Sabah erken saatlerde çiçek toplayın (en yoğun koku).\n Sıcaklık: 15-25°C ideal.",
         "characteristics": {
             "yaprak_tipi": "Bileşik, 5-7 tüylü gri-yeşil yaprakçık",
             "çiçek_rengi": "Pembe ila açık kırmızı",
@@ -88,7 +88,7 @@ SEED_PLANTS = [
         "genus": "Tulipa",
         "description": "İlkbaharda çiçeklenen, Orta Asya'ya özgü popüler bir lale türüdür. Hollanda'nın sembolüdür. Kırmızı, sarı, pembe, beyaz, mor ve çok renkli çeşitleri vardır.",
         "habitat": "İyi drene, verimli, nötr ila hafif alkali topraklarda yetişir. Tam güneş ışığı veya hafif gölge tercih eder.",
-        "care_instructions": "💧 Sulama: İlkbaharda büyüme döneminde düzenli sulama, çiçek açtıktan sonra azaltın.\n☀️ Işık: Tam güneş ışığı ideal (günde 6+ saat).\n🌱 Toprak: İyi drene, kumlu veya tınlı, pH 6.5-7.5.\n🧅 Soğan: Sonbaharda 10-15 cm derinliğe dikin.\n🌡️ Sıcaklık: Soğuğa dayanıklı (-20°C), soğuk stratifikasyon gerektirir.",
+        "care_instructions": " Sulama: İlkbaharda büyüme döneminde düzenli sulama, çiçek açtıktan sonra azaltın.\n Işık: Tam güneş ışığı ideal (günde 6+ saat).\n Toprak: İyi drene, kumlu veya tınlı, pH 6.5-7.5.\n Soğan: Sonbaharda 10-15 cm derinliğe dikin.\n Sıcaklık: Soğuğa dayanıklı (-20°C), soğuk stratifikasyon gerektirir.",
         "characteristics": {
             "yaprak_tipi": "2-6 geniş, mızrak şeklinde, mumlu, mavimsi-yeşil",
             "yaprak_düzeni": "Rozet",
@@ -111,7 +111,7 @@ SEED_PLANTS = [
         "genus": "Tulipa",
         "description": "Dar, bükümlü, uzun taç yaprakları ile ayırt edici bir lale türüdür. Örümcek benzeri görünümüyle dikkat çeker. Sarı-kırmızı çizgili çiçekleri vardır.",
         "habitat": "İyi drene topraklarda yetişir. Tam güneş ışığı gerektirir.",
-        "care_instructions": "💧 Sulama: Orta düzeyde, fazla su vermekten kaçının.\n☀️ Işık: Tam güneş ışığı.\n🌱 Toprak: İyi drene, kumlu.\n🧅 Soğan: Sonbaharda 10 cm derinliğe dikin.\n🌡️ Sıcaklık: Soğuğa dayanıklı.",
+        "care_instructions": " Sulama: Orta düzeyde, fazla su vermekten kaçının.\n Işık: Tam güneş ışığı.\n Toprak: İyi drene, kumlu.\n Soğan: Sonbaharda 10 cm derinliğe dikin.\n Sıcaklık: Soğuğa dayanıklı.",
         "characteristics": {
             "yaprak_tipi": "3-5 doğrusal, mumlu yaprak",
             "çiçek_rengi": "Sarı, kırmızı çizgili",
@@ -133,7 +133,7 @@ SEED_PLANTS = [
         "genus": "Tulipa",
         "description": "İran ve Afganistan'a özgü zarif bir lale türüdür. Açıldığında yıldız şeklinde, beyaz taç yaprakları kırmızı dış yüzlü ve sarı merkezli çiçekler üretir.",
         "habitat": "İyi drene, kayalık topraklarda yetişir. Tam güneş ışığı tercih eder.",
-        "care_instructions": "💧 Sulama: Az sulama, kuraklığa dayanıklı.\n☀️ Işık: Tam güneş ışığı.\n🌱 Toprak: İyi drene, kayalık, kumlu.\n🧅 Soğan: Sonbaharda dikin, doğallaşır (her yıl geri gelir).\n🌡️ Sıcaklık: Sıcağa dayanıklı, çok yıllık.",
+        "care_instructions": " Sulama: Az sulama, kuraklığa dayanıklı.\n Işık: Tam güneş ışığı.\n Toprak: İyi drene, kayalık, kumlu.\n Soğan: Sonbaharda dikin, doğallaşır (her yıl geri gelir).\n Sıcaklık: Sıcağa dayanıklı, çok yıllık.",
         "characteristics": {
             "yaprak_tipi": "3-4 dar, doğrusal, gri-yeşil yaprak",
             "çiçek_rengi": "Beyaz (iç), kırmızı (dış), sarı merkez",
@@ -146,6 +146,59 @@ SEED_PLANTS = [
         },
         "image_urls": [],
         "plantnet_verified": True
+    },
+    
+    # HYACINTHUS (SÜMBÜL) SPECIES
+    {
+        "scientific_name": "Hyacinthus orientalis",
+        "scientific_name_full": "Hyacinthus orientalis L.",
+        "common_names": ["Common Hyacinth", "Sümbül", "Adi Sümbül", "Hollanda Sümbülü"],
+        "family": "Asparagaceae",
+        "genus": "Hyacinthus",
+        "description": "Batı ve Orta Asya'ya özgü, yoğun kokulu bahar çiçeğidir. Bahçelerde en yaygın yetiştirilen sümbül türüdür. Soğanlı bir bitkidir ve ilkbaharda renkli, kokulu çiçek salkımları açar.",
+        "habitat": "İyi drene olmuş, orta verimli topraklarda yetişir. Tam güneş veya hafif gölgeli alanlarda gelişir. Soğuk kış bölgelerine uygundur.",
+        "care_instructions": "💧 Sulama: Çiçeklenme öncesi ve sırasında düzenli sulama, yaz dormant döneminde az sulama.\n☀️ Işık: Tam güneş ışığı tercih eder (günde 6+ saat).\n🌱 Toprak: İyi drene, hafif kumlu, pH 6.0-7.0.\n🌡️ Sıcaklık: Soğuğa dayanıklı, -15°C'ye kadar tolere eder.\n🌸 Bakım: Sonbaharda soğan dikimi, çiçeklenme sonrası yaprakları sarardıktan sonra kesin.\n🔄 Çoğaltma: Soğan bölme ile veya yan soğanlarla.",
+        "characteristics": {
+            "yaprak_tipi": "Basit, şerit şeklinde",
+            "yaprak_rengi": "Koyu yeşil",
+            "yaprak_uzunluğu": "15-35 cm",
+            "çiçek_rengi": "Mavi, mor, pembe, beyaz, sarı, kırmızı (çeşide göre)",
+            "çiçek_yapısı": "Yoğun salkım, 20-50 çiçek",
+            "çiçek_şekli": "Çan şeklinde, 6 taç yaprak",
+            "çiçek_boyutu": "2-3 cm çap",
+            "koku": "Çok güçlü, tatlı, baharatlı koku",
+            "bitki_boyu": "20-30 cm",
+            "çiçeklenme_dönemi": "Erken ilkbahar (Mart-Nisan)",
+            "soğan_boyutu": "5-6 cm çap",
+            "özel_özellik": "Soğanlı bitki, kışa dayanıklı, yoğun koku",
+            "kullanım": "Süs bitkisi, saksı çiçeği, bahçe yatakları, kesme çiçek, parfüm"
+        },
+        "image_urls": [],
+        "plantnet_verified": True
+    },
+    {
+        "scientific_name": "Hyacinthus litwinowii",
+        "scientific_name_full": "Hyacinthus litwinowii Czerniak.",
+        "common_names": ["Litwinow's Hyacinth", "Yabani Sümbül"],
+        "family": "Asparagaceae",
+        "genus": "Hyacinthus",
+        "description": "Türkiye ve İran'a özgü yabani sümbül türüdür. Bahçe sümbüllerinden daha küçük ve narin çiçeklere sahiptir.",
+        "habitat": "Kayalık yamaçlar, step alanları. İyi drene topraklarda yetişir.",
+        "care_instructions": "💧 Sulama: Kuraklığa dayanıklı, az sulama yeterli.\n☀️ Işık: Tam güneş ışığı.\n🌱 Toprak: İyi drene, kumlu-taşlı toprak.\n🌡️ Sıcaklık: -10°C'ye kadar dayanıklı.\n🌸 Bakım: Minimal bakım, doğal koşullara uyum sağlar.",
+        "characteristics": {
+            "yaprak_tipi": "Basit, şerit şeklinde",
+            "yaprak_rengi": "Yeşil",
+            "çiçek_rengi": "Açık mavi, lila",
+            "çiçek_yapısı": "Seyrek salkım, 5-15 çiçek",
+            "çiçek_şekli": "Çan şeklinde",
+            "koku": "Hafif kokulu",
+            "bitki_boyu": "10-20 cm",
+            "çiçeklenme_dönemi": "İlkbahar (Mart-Nisan)",
+            "özel_özellik": "Yabani tür, endemik",
+            "kullanım": "Kaya bahçeleri, doğal peyzaj"
+        },
+        "image_urls": [],
+        "plantnet_verified": False
     },
 ]
 
@@ -180,13 +233,13 @@ def seed_database():
                 result = plant_repository.create_or_update_plant(db, plant_data)
                 
                 if result:
-                    logger.info(f"   ✅ Success: {scientific_name}")
+                    logger.info(f"    Success: {scientific_name}")
                 else:
-                    logger.error(f"   ❌ Failed: {scientific_name}")
+                    logger.error(f"    Failed: {scientific_name}")
                     failed += 1
                     
             except Exception as e:
-                logger.error(f"   ❌ Error processing {plant_data.get('scientific_name')}: {e}")
+                logger.error(f"    Error processing {plant_data.get('scientific_name')}: {e}")
                 failed += 1
                 continue
         
@@ -194,17 +247,17 @@ def seed_database():
         logger.info("  SUMMARY")
         logger.info("="*60)
         logger.info(f"  Total plants: {len(SEED_PLANTS)}")
-        logger.info(f"  ✅ Added: {added}")
-        logger.info(f"  🔄 Updated: {updated}")
-        logger.info(f"  ❌ Failed: {failed}")
+        logger.info(f"  Added: {added}")
+        logger.info(f"  Updated: {updated}")
+        logger.info(f"  Failed: {failed}")
         
         if failed == 0:
-            logger.info("\n  🎉 Database seeding completed successfully!")
+            logger.info("\n   Database seeding completed successfully!")
         else:
-            logger.warning(f"\n  ⚠️  Completed with {failed} failures")
+            logger.warning(f"\n   Completed with {failed} failures")
         
     except Exception as e:
-        logger.error(f"❌ Seeding failed: {e}")
+        logger.error(f" Seeding failed: {e}")
         raise
     finally:
         db.close()
