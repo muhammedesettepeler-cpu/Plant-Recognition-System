@@ -253,7 +253,7 @@ npm test
 ## 👥 Yazar / Author
 
 - Muhammed Esettepeler
-
+- Ramazan Bugra Sahin
 ## 📝 License
 
 This project is licensed under the FSMVU License.
