@@ -1,6 +1,6 @@
 # Development Quick Start Guide
 
-## First Time Setup
+## 🚀 First Time Setup
 
 ### 1. Backend Setup (PowerShell)
 
@@ -22,18 +22,54 @@ cp .env.example .env
 
 # Edit .env and add your API keys
 notepad .env
+```
 
-# Initialize database
-python init_db.py
+### 2. Configure Environment Variables
 
-# Run development server
+Edit `backend/.env` with your API keys:
+
+```bash
+# Required APIs
+PLANTNET_API_KEY=your_plantnet_key          # https://my.plantnet.org/
+GOOGLE_AI_STUDIO_API_KEY=your_gemini_key    # https://aistudio.google.com/
+
+# Weaviate Cloud (for USDA data)
+WEAVIATE_URL=https://YOUR_CLUSTER.weaviate.cloud
+WEAVIATE_API_KEY=your_weaviate_key
+WEAVIATE_GRPC_HOST=grpc-YOUR_CLUSTER.weaviate.cloud
+
+# Optional
+KAGGLE_NOTEBOOK_URL=https://your-kaggle-gradio-url
+OPENROUTER_API_KEY=your_openrouter_key      # Fallback LLM
+REDIS_URL=redis://localhost:6379/0          # For rate limiting
+```
+
+### 3. Import USDA Data to Weaviate
+
+```powershell
+# Make sure virtual environment is active
+.\venv\Scripts\activate
+
+# Import 93K plants to Weaviate Cloud
+python scripts/import_usda_to_weaviate.py
+
+# Verify import
+python scripts/test_weaviate.py
+```
+
+### 4. Run Backend Server
+
+```powershell
+# Start development server with hot reload
 uvicorn app.main:app --reload
 ```
 
-Backend will be available at: http://localhost:8000
-API Documentation: http://localhost:8000/docs
+Backend will be available at:
+- **API**: http://localhost:8000
+- **Docs**: http://localhost:8000/api/v1/docs
+- **ReDoc**: http://localhost:8000/api/v1/redoc
 
-### 2. Frontend Setup (PowerShell)
+### 5. Frontend Setup (PowerShell)
 
 ```powershell
 # Navigate to frontend
@@ -48,54 +84,57 @@ npm start
 
 Frontend will be available at: http://localhost:3000
 
-### 3. Database Setup (Optional - using Docker)
+---
 
-```powershell
-# Start PostgreSQL
-docker run -d `
-  --name plant_postgres `
-  -e POSTGRES_USER=postgres `
-  -e POSTGRES_PASSWORD=postgres `
-  -e POSTGRES_DB=plant_recognition `
-  -p 5432:5432 `
-  postgres:15-alpine
+## 🔑 Required API Keys
 
-# Start Weaviate
-docker run -d `
-  --name plant_weaviate `
-  -p 8080:8080 `
-  -e AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true `
-  -e PERSISTENCE_DATA_PATH=/var/lib/weaviate `
-  semitechnologies/weaviate:latest
-```
+| API | Endpoint | Free Tier |
+|-----|----------|-----------|
+| **PlantNet** | https://my.plantnet.org/ | ✅ 500 req/day |
+| **Google AI Studio** | https://aistudio.google.com/ | ✅ Free tier available |
+| **Weaviate Cloud** | https://console.weaviate.cloud/ | ✅ Free sandbox |
+| **OpenRouter** | https://openrouter.ai/ | ✅ Free models available |
 
-## Required API Keys
+---
 
-1. **Grok API Key**: Get from https://x.ai/
-2. **PlantNet API Key**: Get from https://my.plantnet.org/
-3. **IDrive e2**: Get from https://www.idrive.com/e2/
-
-## Testing the System
+## 🧪 Testing the System
 
 ### Test Health Endpoint
 ```powershell
 curl http://localhost:8000/api/v1/health
 ```
 
-### Test Plant Recognition (with curl)
-```powershell
-curl -X POST http://localhost:8000/api/v1/recognize `
-  -F "file=@path/to/your/plant/image.jpg"
+Expected response:
+```json
+{
+  "status": "healthy",
+  "services": {
+    "usda_plants": { "status": "healthy", "plant_count": 93158 },
+    "kaggle": { "status": "configured" },
+    "plantnet": { "status": "configured" },
+    "llm": { "status": "configured", "provider": "Google Gemini" },
+    "redis": { "status": "not_connected" }
+  }
+}
 ```
 
-### Test Chat Endpoint
+### Test Plant Recognition with Image
+```powershell
+curl -X POST http://localhost:8000/api/v1/chat-with-image `
+  -F "file=@path/to/your/plant/image.jpg" `
+  -F "message=Bu bitki nedir?"
+```
+
+### Test Text Chat
 ```powershell
 curl -X POST http://localhost:8000/api/v1/chat `
   -H "Content-Type: application/json" `
-  -d '{\"message\": \"What is a rose?\"}'
+  -d '{"message": "Güller hakkında bilgi ver"}'
 ```
 
-## Common Issues
+---
+
+## 🐛 Common Issues & Solutions
 
 ### Port Already in Use
 ```powershell
@@ -106,10 +145,16 @@ netstat -ano | findstr :8000
 taskkill /PID <PID> /F
 ```
 
-### Database Connection Error
-- Check if PostgreSQL is running
-- Verify credentials in .env file
-- Ensure database 'plant_recognition' exists
+### Weaviate Connection Error
+1. Check `WEAVIATE_URL` and `WEAVIATE_API_KEY` in .env
+2. Verify cluster is running at https://console.weaviate.cloud/
+3. Check if USDA data is imported: `python scripts/test_weaviate.py`
+
+### CLIP Model Loading Slow
+First run downloads ~350MB model. Subsequent runs use cached model:
+```
+C:\Users\<username>\.cache\huggingface\
+```
 
 ### Module Not Found
 ```powershell
@@ -120,27 +165,42 @@ taskkill /PID <PID> /F
 pip install -r requirements.txt
 ```
 
-## Development Workflow
+### Image Upload Error
+- Check image size (max 10MB)
+- Supported formats: JPEG, PNG, WebP, GIF
+- Check if file is corrupted
+
+---
+
+## 🔄 Development Workflow
 
 1. Start backend: `uvicorn app.main:app --reload`
 2. Start frontend: `npm start`
 3. Make changes to code
-4. Backend auto-reloads
-5. Frontend hot-reloads
-6. Test via browser or API docs
+4. Backend auto-reloads on Python file changes
+5. Frontend hot-reloads on JS/CSS changes
+6. Test via browser (http://localhost:3000) or API docs
 
-## Useful Commands
+---
+
+## 📦 Useful Commands
 
 ### Backend
 ```powershell
 # Run tests
 pytest
 
+# Run specific test
+pytest tests/test_health.py -v
+
 # Format code
 black app/
 
 # Check types
 mypy app/
+
+# Run with specific port
+uvicorn app.main:app --reload --port 8001
 ```
 
 ### Frontend
@@ -153,36 +213,73 @@ npm run build
 
 # Lint
 npm run lint
+
+# Check bundle size
+npm run analyze
 ```
 
-## Docker Quick Start (Alternative)
+---
+
+## 🐳 Docker Quick Start (Alternative)
 
 ```powershell
 # Build and start all services
 docker-compose up -d
 
 # View logs
-docker-compose logs -f
+docker-compose logs -f backend
 
 # Stop all services
 docker-compose down
 
 # Rebuild after code changes
 docker-compose up -d --build
+
+# Run only databases
+docker-compose up -d postgres weaviate redis
 ```
 
-## Next Steps
+Services:
+- PostgreSQL: localhost:5432
+- Weaviate: localhost:8080
+- Backend: localhost:8000
+- Frontend: localhost:3000
+- Grafana: localhost:3001 (admin/admin)
 
-1. Add your PlantNet and Grok API keys to `.env`
-2. Download a plant dataset from Kaggle
-3. Process dataset using `notebooks/dataset_processing.py`
-4. Test image recognition with sample images
-5. Customize the UI in frontend/src
+---
 
-## Resources
+## 📁 Project File Overview
 
-- FastAPI Docs: https://fastapi.tiangolo.com/
-- React Docs: https://react.dev/
-- Material-UI: https://mui.com/
-- Weaviate: https://weaviate.io/developers/weaviate
-- CLIP: https://github.com/openai/CLIP
+### Backend Key Files
+| File | Purpose |
+|------|---------|
+| `app/main.py` | FastAPI app, lifespan, routers |
+| `app/api/chatbot.py` | Main RAG pipeline |
+| `app/services/clip_service.py` | CLIP embeddings |
+| `app/services/usda_service.py` | USDA Weaviate queries |
+| `app/core/config.py` | Pydantic settings |
+| `app/core/security.py` | Image validation |
+
+### Frontend Key Files
+| File | Purpose |
+|------|---------|
+| `src/App.js` | Main app, routing |
+| `src/pages/InteractivePlantPage.js` | Main assistant UI |
+| `src/hooks/usePlantChat.js` | Chat state logic |
+| `src/services/api.js` | Axios API client |
+
+---
+
+## 📚 Resources
+
+- **FastAPI**: https://fastapi.tiangolo.com/
+- **React**: https://react.dev/
+- **Material-UI**: https://mui.com/
+- **Weaviate**: https://weaviate.io/developers/weaviate
+- **CLIP**: https://github.com/openai/CLIP
+- **PlantNet API**: https://my.plantnet.org/usage
+- **Google AI Studio**: https://aistudio.google.com/
+
+---
+
+**Last Updated**: January 2026

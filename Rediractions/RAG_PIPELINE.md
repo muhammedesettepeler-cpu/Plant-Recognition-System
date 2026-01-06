@@ -1,7 +1,8 @@
-# 🌿 RAG Pipeline Architecture - Chatbot Image Recognition
+# 🌿 RAG Pipeline Architecture - Hybrid Plant Recognition
 
 ## Overview
-**Retrieval-Augmented Generation (RAG)** pipeline for intelligent plant identification using vision-language models and vector similarity search.
+
+This document describes the **Hybrid RAG (Retrieval-Augmented Generation)** pipeline used for intelligent plant identification. The system combines multiple data sources (Kaggle PlantCLEF, PlantNet, USDA) with LLM-powered Turkish language generation.
 
 ---
 
@@ -11,84 +12,126 @@
 ┌─────────────────────────────────────────────────────────────────────┐
 │                         FRONTEND (React)                            │
 │  User uploads image + question via FormData (binary, not base64)   │
+│  Components: ImageUpload, PlantChatSection, usePlantChat hook      │
 └────────────────────────────┬────────────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      BACKEND (FastAPI)                              │
 │                   POST /api/v1/chat-with-image                      │
+│                                                                     │
+│  Security Pipeline:                                                 │
+│  1. API Key Auth (optional)  4. MIME Verification                  │
+│  2. Rate Limiting (10/min)   5. Magic Bytes Check                  │
+│  3. Size Check (≤10MB)       6. PIL Sanitization                   │
 └────────────────────────────┬────────────────────────────────────────┘
                              │
                              ▼
-                    ┌────────────────┐
-                    │ 1. Validation  │
-                    │ - Size check   │
-                    │ - Format check │
-                    └────────┬───────┘
-                             │
-                             ▼
-                    ┌────────────────────┐
-                    │ 2. Image Loading   │
-                    │ - PIL Image.open   │
-                    │ - RGB conversion   │
-                    └────────┬───────────┘
-                             │
-                             ▼
-        ┌────────────────────────────────────────────┐
-        │         3. CLIP Preprocessing              │
-        │ - CLIPProcessor: resize, normalize         │
-        │ - Convert to tensor (PyTorch)              │
-        │ - Device placement (CPU/CUDA)              │
-        └────────────────┬───────────────────────────┘
-                         │
-                         ▼
-        ┌────────────────────────────────────────────┐
-        │      4. CLIP Model Inference               │
-        │ - CLIPModel.get_image_features()           │
-        │ - Extract 512-dim embedding                │
-        │ - L2 normalization (for cosine similarity) │
-        │   embedding = features / ||features||      │
-        └────────────────┬───────────────────────────┘
-                         │
-                         ▼
-        ┌────────────────────────────────────────────┐
-        │    5. Weaviate Vector Search               │
-        │ - Query: normalized embedding (512-dim)    │
-        │ - Method: cosine similarity                │
-        │ - Returns: top-5 most similar plants       │
-        │ - With certainty scores (0.0 - 1.0)        │
-        └────────────────┬───────────────────────────┘
-                         │
-                         ▼
-        ┌────────────────────────────────────────────┐
-        │       6. RAG Context Building              │
-        │ - Top-3 plants from vector DB              │
-        │ - Format: scientific name + certainty      │
-        │ - Example context:                         │
-        │   "Similar plants:                         │
-        │    - Rosa damascena (0.95 similarity)      │
-        │    - Rosa gallica (0.89 similarity)"       │
-        └────────────────┬───────────────────────────┘
-                         │
-                         ▼
-        ┌────────────────────────────────────────────┐
-        │    7. LLM Generation (OpenRouter)          │
-        │ - Model: nvidia/nemotron-nano-9b-v2        │
-        │ - Input: RAG context + user question       │
-        │ - Output: Detailed, context-aware answer   │
-        └────────────────┬───────────────────────────┘
-                         │
-                         ▼
-        ┌────────────────────────────────────────────┐
-        │         8. Response Return                 │
-        │ {                                          │
-        │   "session_id": "uuid",                    │
-        │   "response": "LLM answer",                │
-        │   "identified_plants": [...top 3],         │
-        │   "confidence": 0.95,                      │
-        │   "timestamp": "2025-10-18T..."            │
-        │ }                                          │
-        └────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│              STEP 1: PARALLEL IMAGE RECOGNITION                     │
+│                                                                     │
+│  ┌─────────────────────────┐  ┌─────────────────────────┐          │
+│  │   KAGGLE PLANTCLEF      │  │      PLANTNET API       │          │
+│  │                         │  │                         │          │
+│  │  • Gradio Remote API    │  │  • POST with image      │          │
+│  │  • 1.5TB dataset        │  │  • Returns species      │          │
+│  │  • ResNet model         │  │  • Common names         │          │
+│  │  • Top-5 predictions    │  │  • Family info          │          │
+│  │  • High accuracy        │  │  • GBIF ID              │          │
+│  └───────────┬─────────────┘  └───────────┬─────────────┘          │
+│              │                            │                         │
+│              └────────────┬───────────────┘                         │
+│                           ▼                                         │
+│                   Merge & Prioritize                                │
+│           (Kaggle primary, PlantNet enrichment)                     │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              STEP 2: USDA VALIDATION & ENRICHMENT                   │
+│                                                                     │
+│  For each identified plant:                                         │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  usda_service.find_by_scientific_name("Rosa damascena")     │   │
+│  │                                                              │   │
+│  │  Weaviate Query (93,158 plants):                            │   │
+│  │  • Text search on scientificName                            │   │
+│  │  • Returns: symbol, commonName, family                      │   │
+│  │  • Mark as usda_verified: true if found                     │   │
+│  │  • Fill missing fields (family, common name)                │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              STEP 3: CONTEXT BUILDING                               │
+│                                                                     │
+│  Build Turkish prompt for LLM:                                      │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  BULUNAN BİTKİLER:                                          │   │
+│  │                                                              │   │
+│  │  - Rosa damascena (Damascus Rose)                           │   │
+│  │    Aile: Rosaceae                                           │   │
+│  │    Güven: 95.0%                                             │   │
+│  │    Kaynak: kaggle-plantclef, ✓ USDA Doğrulandı             │   │
+│  │                                                              │   │
+│  │  - Rosa gallica (French Rose)                               │   │
+│  │    Aile: Rosaceae                                           │   │
+│  │    Güven: 87.0%                                             │   │
+│  │    Kaynak: plantnet, ✓ USDA Doğrulandı                     │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              STEP 4: LLM RESPONSE GENERATION                        │
+│                                                                     │
+│  Priority Order:                                                    │
+│  1. Google Gemini 2.0 Flash (GOOGLE_AI_STUDIO_API_KEY)             │
+│  2. OpenRouter Nemotron (OPENROUTER_API_KEY)                       │
+│  3. Template-based fallback (no API needed)                        │
+│                                                                     │
+│  ┌─────────────────────────────────────────────────────────────┐   │
+│  │  System: Sen bir botanik uzmanısın. Türkçe yanıt ver.       │   │
+│  │                                                              │   │
+│  │  Context: [TOP 3 PLANTS WITH DETAILS]                       │   │
+│  │                                                              │   │
+│  │  User Query: [SANITIZED USER MESSAGE]                       │   │
+│  │                                                              │   │
+│  │  → Generate contextual Turkish response                     │   │
+│  └─────────────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│              STEP 5: RESPONSE FORMATTING                            │
+│                                                                     │
+│  {                                                                  │
+│    "session_id": "abc-123-def",                                    │
+│    "response": "🌿 **Görsel Analizi Tamamlandı!**\n...",           │
+│    "identified_plants": [                                          │
+│      {                                                              │
+│        "id": 1,                                                    │
+│        "scientificName": "Rosa damascena",                         │
+│        "commonName": "Damascus Rose",                              │
+│        "family": "Rosaceae",                                       │
+│        "confidence": 0.95,                                         │
+│        "source": "kaggle-plantclef",                               │
+│        "usda_verified": true                                       │
+│      }                                                              │
+│    ],                                                               │
+│    "total_matches": 3,                                             │
+│    "highest_confidence": 0.95,                                     │
+│    "sources": {                                                    │
+│      "kaggle": 2,                                                  │
+│      "plantnet": 1,                                                │
+│      "usda_verified": 2                                            │
+│    },                                                               │
+│    "image_hash": "a1b2c3d4...",                                    │
+│    "timestamp": "2026-01-06T17:00:00Z"                             │
+│  }                                                                  │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -96,125 +139,114 @@
 ## 📦 Key Components
 
 ### 1. **CLIP Service** (`clip_service.py`)
-- **Model**: `openai/clip-vit-base-patch32`
-- **Purpose**: Convert images/text to 512-dimensional embeddings
-- **Key Features**:
-  - Lazy loading (loads on first use)
-  - RGB conversion
-  - L2 normalization
-  - GPU support (CUDA)
 
 ```python
-# Embedding extraction
-embedding = clip_service.encode_image(pil_image)
-# Returns: [0.123, -0.456, ...] (512 floats, normalized)
+# Advanced preprocessing pipeline
+def _advanced_preprocessing(image):
+    1. RGB conversion
+    2. fastNlMeansDenoisingColored (OpenCV)
+    3. Sharpness enhancement (factor 1.3)
+    4. Auto contrast (factor 1.2)
+    5. Color enhancement (factor 1.15)
+    return processed_image
+
+# Test-Time Augmentation
+def _multi_crop_augmentation(image):
+    crops = [
+        center_crop,
+        top_left_corner,
+        top_right_corner,
+        bottom_left_corner,
+        bottom_right_corner
+    ]
+    return crops  # 5 variants
+
+# Final embedding
+embedding = average(encode_image(crop) for crop in crops)
+embedding = L2_normalize(embedding)  # 512-dim vector
 ```
 
-### 2. **Weaviate Service** (`weaviate_service.py`)
-- **Vector DB**: Weaviate Cloud
-- **Similarity Metric**: Cosine distance
-- **Purpose**: Find similar plants using vector embeddings
+### 2. **Kaggle Notebook Service** (`kaggle_notebook_service.py`)
 
 ```python
-# Similarity search
-results = weaviate_service.similarity_search(embedding, limit=5)
-# Returns: [
-#   {"scientificName": "Rosa damascena", "_additional": {"certainty": 0.95}},
-#   ...
-# ]
+# Gradio API integration
+async def identify_plant(image_bytes, top_k=5):
+    # 1. Convert to base64
+    image_base64 = base64.b64encode(buffer.getvalue())
+    
+    # 2. POST to Gradio API
+    response = await client.post(
+        f"{notebook_url}/gradio_api/call/predict",
+        json={"data": [{"url": f"data:image/jpeg;base64,{image_base64}"}]}
+    )
+    
+    # 3. Get event_id and fetch result
+    event_id = response.json()["event_id"]
+    result = await client.get(f".../predict/{event_id}")
+    
+    # 4. Parse SSE response
+    return format_predictions(result)
 ```
 
-### 3. **Grok Service** (`grok_service.py`)
-- **LLM**: OpenRouter (nvidia/nemotron-nano-9b-v2:free)
-- **Purpose**: Generate context-aware responses
+### 3. **USDA Service** (`usda_service.py`)
 
 ```python
-# RAG response
-response = await grok_service.generate_rag_response(
-    prompt="What is this flower?",
-    context=similar_plants
-)
+# Weaviate text search
+def find_by_scientific_name(scientific_name):
+    result = client.query.get("USDAPlant", [
+        "symbol", "scientificName", "commonName", "family"
+    ]).with_bm25(
+        query=scientific_name,
+        properties=["scientificName"]
+    ).with_limit(1).do()
+    
+    return result["data"]["Get"]["USDAPlant"][0]
+```
+
+### 4. **LLM Service** (`grok_service.py`)
+
+```python
+# Template-based fallback (no external API needed)
+def _generate_plant_response(prompt, context):
+    response_parts = ["🌿 **Görsel Analizi Tamamlandı!**\n"]
+    response_parts.append("**Bulunan Bitkiler:**")
+    response_parts.append(context)
+    
+    # Add contextual tips based on query
+    if "bakım" in query_lower:
+        response_parts.append("**💡 Bakım Önerileri:**")
+        ...
+    
+    return "\n".join(response_parts)
 ```
 
 ---
 
 ## 🎯 Advantages of This Architecture
 
-### ✅ Binary Upload (FormData)
-- **Faster**: No base64 encoding overhead
-- **Smaller**: ~33% less bandwidth
-- **Cleaner**: Direct binary processing
+### ✅ Hybrid Recognition
+| Source | Strength | Data Size |
+|--------|----------|-----------|
+| Kaggle PlantCLEF | High accuracy, specialized model | 1.5TB |
+| PlantNet | Common names, GBIF IDs | API |
+| USDA | Validation, US plant coverage | 93K plants |
 
-### ✅ CLIP Preprocessing
-- **Standardized**: Automatic resize, normalization
-- **Robust**: Handles various image formats
-- **Optimized**: Uses PyTorch tensors
-
-### ✅ Vector Similarity Search
-- **Fast**: O(log n) with HNSW index
-- **Accurate**: Cosine similarity on normalized vectors
-- **Scalable**: Weaviate Cloud handles millions of vectors
-
-### ✅ RAG Context
-- **Relevant**: Only top-k matches used
-- **Grounded**: LLM answers based on actual DB data
-- **Transparent**: Returns certainty scores
-
----
-
-## 🚀 Usage Example
-
-### Frontend (React)
-```javascript
-const formData = new FormData();
-formData.append('file', imageFile);  // Binary file
-formData.append('message', 'What flower is this?');
-
-const response = await fetch('http://localhost:8000/api/v1/chat-with-image', {
-  method: 'POST',
-  body: formData  // No JSON, pure binary!
-});
-
-const data = await response.json();
-console.log(data.response);  // LLM answer
-console.log(data.identified_plants);  // Top matches
-console.log(data.confidence);  // Similarity score
+### ✅ Multi-LLM Support
+```
+1. Google Gemini → Preferred (fast, accurate)
+2. OpenRouter → Fallback (free tier)
+3. Templates → Offline (no API needed)
 ```
 
-### Backend Response
-```json
-{
-  "session_id": "abc-123-def",
-  "response": "This appears to be a Damascus Rose (Rosa damascena), a fragrant species known for...",
-  "identified_plants": [
-    {
-      "scientificName": "Rosa damascena",
-      "commonName": "Damascus Rose",
-      "_additional": {"certainty": 0.95}
-    }
-  ],
-  "confidence": 0.95,
-  "timestamp": "2025-10-18T12:34:56.789Z"
-}
-```
+### ✅ USDA Verification
+- Validates scientific names against authoritative database
+- Adds `usda_verified: true` flag for trusted results
+- Enriches missing family/common name data
 
----
-
-## 🔧 Configuration
-
-### Environment Variables (`.env`)
-```bash
-# CLIP Model
-CLIP_MODEL_NAME=openai/clip-vit-base-patch32
-
-# Weaviate Cloud
-WEAVIATE_URL=https://xxx.weaviate.cloud
-WEAVIATE_API_KEY=your_api_key
-
-# OpenRouter LLM
-OPENROUTER_API_KEY=sk-or-v1-xxx
-OPENROUTER_MODEL=nvidia/nemotron-nano-9b-v2:free
-```
+### ✅ Turkish Language
+- All prompts and responses in Turkish
+- Context-aware answers based on query type
+- Care tips, toxicity warnings, etc.
 
 ---
 
@@ -223,25 +255,82 @@ OPENROUTER_MODEL=nvidia/nemotron-nano-9b-v2:free
 | Component | Latency | Notes |
 |-----------|---------|-------|
 | Image upload | ~50ms | FormData binary |
-| CLIP encoding | ~200ms | CPU, ~50ms GPU |
-| Vector search | ~20ms | Weaviate Cloud |
-| LLM generation | ~2s | OpenRouter API |
-| **Total** | **~2.3s** | End-to-end |
+| Security checks | ~20ms | 6-layer validation |
+| Kaggle API | ~3-5s | Remote Gradio inference |
+| PlantNet API | ~1-2s | External API |
+| USDA search | ~20ms | Weaviate Cloud BM25 |
+| LLM generation | ~1-3s | Depends on provider |
+| **Total** | **~5-10s** | End-to-end |
 
 ---
 
-## 🛠️ Future Improvements
+## 🔧 Configuration
 
-1. **Caching**: Redis for frequent queries
-2. **Batch Processing**: Multiple images at once
-3. **Fine-tuning**: CLIP on plant-specific dataset (PlantCLEF)
-4. **Hybrid Search**: Combine vector + keyword search
-5. **Streaming**: LLM response streaming for better UX
+### Environment Variables
+
+```bash
+# Kaggle Notebook (PlantCLEF inference)
+KAGGLE_NOTEBOOK_URL=https://xxxx.gradio.live
+
+# PlantNet (plant identification)
+PLANTNET_API_KEY=your_key
+
+# LLM (response generation)
+GOOGLE_AI_STUDIO_API_KEY=your_key  # Primary
+OPENROUTER_API_KEY=your_key        # Fallback
+
+# USDA in Weaviate (validation)
+WEAVIATE_URL=https://xxx.weaviate.cloud
+WEAVIATE_API_KEY=your_key
+```
+
+---
+
+## 🛠️ Usage Example
+
+### Frontend (React)
+```javascript
+const handleSend = async () => {
+  const formData = new FormData();
+  formData.append('file', selectedImage);
+  formData.append('message', 'Bu bitki nedir?');
+  formData.append('session_id', sessionId);
+
+  const response = await chatAPI.sendImageMessage(formData);
+  
+  console.log(response.data.response);
+  console.log(response.data.identified_plants);
+  console.log(response.data.sources.usda_verified);
+};
+```
+
+### cURL
+```bash
+curl -X POST http://localhost:8000/api/v1/chat-with-image \
+  -F "file=@rose.jpg" \
+  -F "message=Bu çiçeğin bakımı nasıl yapılır?"
+```
+
+---
+
+## 🚀 Future Improvements
+
+- [ ] CLIP fine-tuning on PlantCLEF dataset
+- [ ] Streaming LLM responses
+- [ ] Redis caching for repeat queries
+- [ ] Batch image processing
+- [ ] Multi-language support
+- [ ] Confidence thresholding
 
 ---
 
 ## 📚 References
 
 - **CLIP Paper**: [Learning Transferable Visual Models](https://arxiv.org/abs/2103.00020)
-- **Weaviate Docs**: [Vector Search](https://weaviate.io/developers/weaviate/search/similarity)
-- **RAG Pattern**: [Retrieval-Augmented Generation for AI](https://arxiv.org/abs/2005.11401)
+- **Weaviate Docs**: [BM25 Search](https://weaviate.io/developers/weaviate/search/bm25)
+- **RAG Pattern**: [Retrieval-Augmented Generation](https://arxiv.org/abs/2005.11401)
+- **PlantCLEF**: [LifeCLEF Plant Identification](https://www.imageclef.org/node/311)
+
+---
+
+**Last Updated**: January 2026
