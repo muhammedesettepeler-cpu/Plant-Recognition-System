@@ -20,7 +20,7 @@ export const usePlantChat = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [currentPlantContext, setCurrentPlantContext] = useState(null);
-  
+
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -69,7 +69,7 @@ export const usePlantChat = () => {
         });
 
         response = await chatAPI.sendImageMessage(formData);
-        
+
         // Save plant context for follow-up questions
         if (response.data.identified_plants && response.data.identified_plants.length > 0) {
           setCurrentPlantContext({
@@ -99,7 +99,7 @@ export const usePlantChat = () => {
 
       // Debug: Backend'den gelen response'u kontrol et
       console.log('Backend response:', response.data);
-      
+
       const assistantMessage = {
         role: 'assistant',
         content: response.data.response,
@@ -109,15 +109,30 @@ export const usePlantChat = () => {
         total_matches: response.data.total_matches,
         similarity_results: response.data.similarity_results,
       };
-      
+
       console.log('Assistant message confidence:', assistantMessage.confidence);
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Chat error:', error);
+
+      // Properly extract error message (handle both string and object responses)
+      let errorText = 'Sorry, I encountered an error. Please try again.';
+      if (error.response?.data?.message) {
+        errorText = typeof error.response.data.message === 'string'
+          ? error.response.data.message
+          : JSON.stringify(error.response.data.message);
+      } else if (error.response?.data?.detail) {
+        errorText = typeof error.response.data.detail === 'string'
+          ? error.response.data.detail
+          : JSON.stringify(error.response.data.detail);
+      } else if (typeof error.message === 'string') {
+        errorText = error.message;
+      }
+
       const errorMessage = {
         role: 'assistant',
-        content: error.message || 'Sorry, I encountered an error. Please try again.',
+        content: errorText,
         timestamp: new Date().toISOString(),
         error: true,
       };
@@ -149,7 +164,7 @@ export const usePlantChat = () => {
     imagePreview,
     currentPlantContext,
     messagesEndRef,
-    
+
     // Handlers
     handleFileSelect,
     handleRemoveImage,

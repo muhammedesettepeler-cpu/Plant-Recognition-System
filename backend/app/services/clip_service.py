@@ -48,7 +48,7 @@ class CLIPService:
             enhancer = ImageEnhance.Color(image)
             image = enhancer.enhance(1.2)  # 20% more saturated
             
-            logger.debug("✨ Advanced preprocessing applied: denoise, sharpen, contrast, color enhance")
+            logger.debug(" Advanced preprocessing applied: denoise, sharpen, contrast, color enhance")
             return image
             
         except Exception as e:
@@ -134,12 +134,12 @@ class CLIPService:
                 image = image.convert("RGB")
             
             # Apply advanced preprocessing
-            logger.info("🔧 Applying advanced preprocessing...")
+            logger.info(" Applying advanced preprocessing...")
             image = self._advanced_preprocessing(image)
             
             # Test-Time Augmentation with multi-crop
             if use_tta and min(image.size) > 300:  # Only for larger images
-                logger.info("🔍 Using multi-crop TTA for better accuracy...")
+                logger.info(" Using multi-crop TTA for better accuracy...")
                 crops = self._multi_crop_augmentation(image)
                 
                 # Extract embeddings for all crops
@@ -158,7 +158,7 @@ class CLIPService:
                 # Re-normalize after averaging
                 final_features = final_features / final_features.norm(dim=-1, keepdim=True)
                 
-                logger.info(f"✅ TTA complete: averaged {len(crops)} crops")
+                logger.info(f" TTA complete: averaged {len(crops)} crops")
             else:
                 # Standard single-crop encoding
                 inputs = self.processor(images=image, return_tensors="pt")

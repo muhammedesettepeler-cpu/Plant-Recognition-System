@@ -3,7 +3,10 @@ Populate Weaviate with test plant data
 Creates synthetic plant images and adds them to Weaviate for testing
 """
 import sys
-sys.path.insert(0, 'backend')
+import os
+# Add parent directory to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 from app.services.weaviate_service import weaviate_service
 from app.services.clip_service import clip_service

@@ -44,7 +44,7 @@ const PlantMessageItem = ({ message }) => {
         >
           {message.role === 'user' ? <PersonIcon /> : <SmartToyIcon />}
         </Avatar>
-        
+
         <Paper
           elevation={1}
           sx={{
@@ -61,9 +61,11 @@ const PlantMessageItem = ({ message }) => {
               sx={{ mb: 1 }}
             />
           )}
-          
+
           <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-            {message.content}
+            {typeof message.content === 'string'
+              ? message.content
+              : (message.content?.message || message.content?.error || JSON.stringify(message.content))}
           </Typography>
 
           {/* Sadece confidence varsa ve 0'dan büyükse göster */}
@@ -86,7 +88,7 @@ const PlantMessageItem = ({ message }) => {
                 const commonName = plant.commonName || plant.common_name || '';
                 const confidence = plant.confidence || plant.certainty || 0;
                 const family = plant.family || '';
-                
+
                 return (
                   <Box key={idx} sx={{ mb: 1 }}>
                     <Chip
@@ -94,8 +96,8 @@ const PlantMessageItem = ({ message }) => {
                       size="small"
                       color={getConfidenceColor(confidence)}
                       variant={idx === 0 ? "filled" : "outlined"}
-                      sx={{ 
-                        mr: 0.5, 
+                      sx={{
+                        mr: 0.5,
                         mb: 0.5,
                         fontWeight: idx === 0 ? 600 : 400
                       }}
